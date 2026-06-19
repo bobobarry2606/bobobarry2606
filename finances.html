@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tableau de Bord Financier — Juillet 2026</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  :root {
+    --bg: #0f1117;
+    --card: #1a1d27;
+    --border: #2a2d3e;
+    --green: #00d26a;
+    --red: #ff4d6d;
+    --blue: #4d79ff;
+    --yellow: #ffd166;
+    --purple: #a855f7;
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; font-size: 14px; }
+
+  header {
+    background: linear-gradient(135deg, #1a1d27, #0f1117);
+    border-bottom: 1px solid var(--border);
+    padding: 20px 32px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  header h1 { font-size: 22px; font-weight: 700; }
+  header h1 span { color: var(--green); }
+  .month-nav { display: flex; gap: 8px; align-items: center; }
+  .month-nav button {
+    background: var(--card); border: 1px solid var(--border); color: var(--text);
+    padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 13px;
+  }
+  .month-nav button:hover { border-color: var(--blue); }
+  #current-month { font-weight: 600; font-size: 15px; min-width: 120px; text-align: center; }
+  .save-btn {
+    background: var(--green); color: #000; border: none; padding: 8px 18px;
+    border-radius: 6px; cursor: pointer; font-weight: 700; font-size: 13px;
+  }
+  .save-btn:hover { opacity: 0.85; }
+
+  .container { max-width: 1400px; margin: 0 auto; padding: 24px 32px; }
+
+  /* KPI Row */
+  .kpi-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-bottom: 28px; }
+  .kpi-card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+    padding: 18px 20px;
+  }
+  .kpi-card .label { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 8px; }
+  .kpi-card .value { font-size: 26px; font-weight: 700; }
+  .kpi-card .sub { font-size: 11px; color: var(--muted); margin-top: 4px; }
+  .kpi-card.green .value { color: var(--green); }
+  .kpi-card.red .value { color: var(--red); }
+  .kpi-card.blue .value { color: var(--blue); }
+  .kpi-card.yellow .value { color: var(--yellow); }
+  .kpi-card.purple .value { color: var(--purple); }
+
+  /* Tabs */
+  .tabs { display: flex; gap: 4px; margin-bottom: 20px; border-bottom: 1px solid var(--border); }
+  .tab {
+    padding: 10px 20px; cursor: pointer; font-size: 13px; font-weight: 500;
+    border-bottom: 2px solid transparent; color: var(--muted);
+    transition: all 0.2s;
+  }
+  .tab.active { color: var(--text); border-bottom-color: var(--blue); }
+  .tab:hover { color: var(--text); }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* Grid layout */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+
+  /* Cards */
+  .card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px;
+  }
+  .card h3 { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+  .card h3 .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+
+  /* Tables */
+  table { width: 100%; border-collapse: collapse; }
+  th {
+    text-align: left; font-size: 11px; font-weight: 600; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.8px; padding: 8px 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  td { padding: 7px 10px; border-bottom: 1px solid rgba(255,255,255,0.04); vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,0.02); }
+
+  /* Editable cells */
+  .editable {
+    background: transparent; border: 1px solid transparent; color: var(--text);
+    font-size: 14px; font-family: inherit; width: 100%; padding: 3px 6px;
+    border-radius: 4px; outline: none;
+  }
+  .editable:focus { border-color: var(--blue); background: rgba(77,121,255,0.08); }
+  .editable.amount { text-align: right; color: var(--green); font-weight: 500; }
+  .editable.expense { color: var(--red); }
+  .editable.category { color: var(--yellow); }
+
+  /* Add row button */
+  .add-row-btn {
+    background: none; border: 1px dashed var(--border); color: var(--muted);
+    width: 100%; padding: 7px; border-radius: 6px; cursor: pointer; margin-top: 8px;
+    font-size: 12px; transition: all 0.2s;
+  }
+  .add-row-btn:hover { border-color: var(--blue); color: var(--blue); }
+  .del-btn {
+    background: none; border: none; color: var(--red); cursor: pointer; font-size: 16px;
+    opacity: 0.4; padding: 0 4px;
+  }
+  .del-btn:hover { opacity: 1; }
+
+  /* Progress bars */
+  .progress-wrap { margin-top: 6px; }
+  .progress-bar { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 3px; transition: width 0.5s; }
+
+  /* Badge */
+  .badge {
+    display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;
+  }
+  .badge.green { background: rgba(0,210,106,0.15); color: var(--green); }
+  .badge.red { background: rgba(255,77,109,0.15); color: var(--red); }
+  .badge.yellow { background: rgba(255,209,102,0.15); color: var(--yellow); }
+  .badge.blue { background: rgba(77,121,255,0.15); color: var(--blue); }
+
+  /* Chart containers */
+  .chart-wrap { position: relative; height: 220px; }
+
+  /* Horizon sections */
+  .horizon-header {
+    display: flex; align-items: center; gap: 12px; margin: 24px 0 16px;
+  }
+  .horizon-header h2 { font-size: 16px; font-weight: 700; }
+  .horizon-badge {
+    padding: 3px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; letter-spacing: 0.5px;
+  }
+  .horizon-badge.court { background: rgba(0,210,106,0.15); color: var(--green); }
+  .horizon-badge.moyen { background: rgba(77,121,255,0.15); color: var(--blue); }
+  .horizon-badge.long { background: rgba(168,85,247,0.15); color: var(--purple); }
+
+  /* Savings progress */
+  .goal-item { margin-bottom: 14px; }
+  .goal-item .goal-header { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 13px; }
+  .goal-item .goal-name { font-weight: 500; }
+  .goal-item .goal-pct { color: var(--muted); }
+
+  /* Net worth tracker */
+  .nw-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.04); }
+  .nw-row:last-child { border-bottom: none; }
+  .nw-row .nw-label { color: var(--muted); font-size: 13px; }
+  .nw-row .nw-val { font-weight: 600; }
+
+  /* Tooltip */
+  .tip { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+  select.editable {
+    appearance: none; -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2394a3b8'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 8px center;
+    padding-right: 24px; cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>💰 Dashboard <span>Finances Perso</span></h1>
+  <div class="month-nav">
+    <button onclick="changeMonth(-1)">◀</button>
+    <span id="current-month"></span>
+    <button onclick="changeMonth(1)">▶</button>
+  </div>
+  <button class="save-btn" onclick="saveAll()">💾 Sauvegarder</button>
+</header>
+
+<div class="container">
+
+  <!-- KPIs -->
+  <div class="kpi-grid">
+    <div class="kpi-card green">
+      <div class="label">Revenus du mois</div>
+      <div class="value" id="kpi-income">$0</div>
+      <div class="sub">Toutes sources</div>
+    </div>
+    <div class="kpi-card red">
+      <div class="label">Dépenses du mois</div>
+      <div class="value" id="kpi-expenses">$0</div>
+      <div class="sub">Total des sorties</div>
+    </div>
+    <div class="kpi-card blue">
+      <div class="label">Solde net</div>
+      <div class="value" id="kpi-net">$0</div>
+      <div class="sub">Revenus − Dépenses</div>
+    </div>
+    <div class="kpi-card yellow">
+      <div class="label">Taux d'épargne</div>
+      <div class="value" id="kpi-saverate">0%</div>
+      <div class="sub">Objectif : 20%</div>
+    </div>
+    <div class="kpi-card purple">
+      <div class="label">Patrimoine net</div>
+      <div class="value" id="kpi-networth">$0</div>
+      <div class="sub">Actifs − Passifs</div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('mensuel')">📅 Mensuel</div>
+    <div class="tab" onclick="switchTab('court')">⚡ Court terme</div>
+    <div class="tab" onclick="switchTab('moyen')">📈 Moyen terme</div>
+    <div class="tab" onclick="switchTab('long')">🏆 Long terme</div>
+    <div class="tab" onclick="switchTab('patrimoine')">🏦 Patrimoine</div>
+  </div>
+
+  <!-- ===================== TAB: MENSUEL ===================== -->
+  <div id="tab-mensuel" class="tab-content active">
+    <div class="grid-2">
+
+      <!-- Revenus -->
+      <div class="card">
+        <h3><span class="dot" style="background:var(--green)"></span>Revenus</h3>
+        <table>
+          <thead><tr>
+            <th>Source</th><th>Catégorie</th><th style="text-align:right">Montant</th><th></th>
+          </tr></thead>
+          <tbody id="income-body"></tbody>
+        </table>
+        <button class="add-row-btn" onclick="addRow('income')">+ Ajouter une source</button>
+      </div>
+
+      <!-- Dépenses fixes -->
+      <div class="card">
+        <h3><span class="dot" style="background:var(--red)"></span>Dépenses Fixes</h3>
+        <table>
+          <thead><tr>
+            <th>Description</th><th>Catégorie</th><th style="text-align:right">Montant</th><th></th>
+          </tr></thead>
+          <tbody id="fixed-body"></tbody>
+        </table>
+        <button class="add-row-btn" onclick="addRow('fixed')">+ Ajouter une dépense fixe</button>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <!-- Dépenses variables -->
+      <div class="card">
+        <h3><span class="dot" style="background:var(--yellow)"></span>Dépenses Variables</h3>
+        <table>
+          <thead><tr>
+            <th>Description</th><th>Catégorie</th><th style="text-align:right">Budget</th><th style="text-align:right">Réel</th><th></th>
+          </tr></thead>
+          <tbody id="variable-body"></tbody>
+        </table>
+        <button class="add-row-btn" onclick="addRow('variable')">+ Ajouter une dépense variable</button>
+      </div>
+
+      <!-- Graphique répartition -->
+      <div class="card">
+        <h3><span class="dot" style="background:var(--blue)"></span>Répartition des dépenses</h3>
+        <div class="chart-wrap"><canvas id="donut-chart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Résumé mensuel -->
+    <div class="card">
+      <h3><span class="dot" style="background:var(--purple)"></span>Résumé & Analyse du mois</h3>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:20px">
+        <div>
+          <div style="color:var(--muted);font-size:12px;margin-bottom:4px">Budget dépenses variables</div>
+          <div id="sum-var-budget" style="font-size:18px;font-weight:700;color:var(--yellow)">$0</div>
+        </div>
+        <div>
+          <div style="color:var(--muted);font-size:12px;margin-bottom:4px">Réel dépenses variables</div>
+          <div id="sum-var-real" style="font-size:18px;font-weight:700;color:var(--yellow)">$0</div>
+        </div>
+        <div>
+          <div style="color:var(--muted);font-size:12px;margin-bottom:4px">Écart budget/réel</div>
+          <div id="sum-var-diff" style="font-size:18px;font-weight:700">$0</div>
+        </div>
+        <div>
+          <div style="color:var(--muted);font-size:12px;margin-bottom:4px">Montant disponible à épargner</div>
+          <div id="sum-saveable" style="font-size:18px;font-weight:700;color:var(--green)">$0</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== TAB: COURT TERME (0–3 mois) ===================== -->
+  <div id="tab-court" class="tab-content">
+    <div class="horizon-header">
+      <h2>Court Terme</h2>
+      <span class="horizon-badge court">0 – 3 mois</span>
+    </div>
+    <div class="grid-2">
+      <div class="card">
+        <h3><span class="dot" style="background:var(--green)"></span>Fonds d'urgence</h3>
+        <div id="emergency-goals"></div>
+        <table style="margin-top:16px">
+          <thead><tr><th>Objectif</th><th style="text-align:right">Cible ($)</th><th style="text-align:right">Actuel ($)</th><th></th></tr></thead>
+          <tbody id="emergency-body"></tbody>
+        </table>
+        <button class="add-row-btn" onclick="addRow('emergency')">+ Ajouter objectif</button>
+      </div>
+      <div class="card">
+        <h3><span class="dot" style="background:var(--yellow)"></span>Dépenses prévues — 3 prochains mois</h3>
+        <table>
+          <thead><tr><th>Description</th><th>Mois</th><th style="text-align:right">Montant</th><th></th></tr></thead>
+          <tbody id="upcoming-body"></tbody>
+        </table>
+        <button class="add-row-btn" onclick="addRow('upcoming')">+ Ajouter dépense prévue</button>
+      </div>
+    </div>
+    <div class="card">
+      <h3><span class="dot" style="background:var(--blue)"></span>Dettes court terme à rembourser (&lt; 3 mois)</h3>
+      <table>
+        <thead><tr><th>Créancier</th><th>Solde restant ($)</th><th>Paiement mensuel ($)</th><th>Date limite</th><th>Priorité</th><th></th></tr></thead>
+        <tbody id="debt-short-body"></tbody>
+      </table>
+      <button class="add-row-btn" onclick="addRow('debt-short')">+ Ajouter dette</button>
+    </div>
+  </div>
+
+  <!-- ===================== TAB: MOYEN TERME (3–24 mois) ===================== -->
+  <div id="tab-moyen" class="tab-content">
+    <div class="horizon-header">
+      <h2>Moyen Terme</h2>
+      <span class="horizon-badge moyen">3 mois – 2 ans</span>
+    </div>
+    <div class="grid-2">
+      <div class="card">
+        <h3><span class="dot" style="background:var(--blue)"></span>Projets & Objectifs d'épargne</h3>
+        <table>
+          <thead><tr><th>Projet</th><th>Cible ($)</th><th>Épargné ($)</th><th>Échéance</th><th></th></tr></thead>
+          <tbody id="savings-goals-body"></tbody>
+        </table>
+        <button class="add-row-btn" onclick="addRow('savings-goals')">+ Ajouter projet</button>
+        <div id="savings-goals-bars" style="margin-top:16px"></div>
+      </div>
+      <div class="card">
+        <h3><span class="dot" style="background:var(--yellow)"></span>Dettes moyen terme</h3>
+        <table>
+          <thead><tr><th>Créancier</th><th>Solde ($)</th><th>Taux (%)</th><th>Paiement/mois ($)</th><th></th></tr></thead>
+          <tbody id="debt-mid-body"></tbody>
+        </table>
+        <button class="add-row-btn" onclick="addRow('debt-mid')">+ Ajouter dette</button>
+      </div>
+    </div>
+    <div class="card">
+      <h3><span class="dot" style="background:var(--purple)"></span>Évolution projetée du solde (12 mois)</h3>
+      <div class="chart-wrap" style="height:250px"><canvas id="projection-chart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- ===================== TAB: LONG TERME (2+ ans) ===================== -->
+  <div id="tab-long" class="tab-content">
+    <div class="horizon-header">
+      <h2>Long Terme</h2>
+      <span class="horizon-badge long">2 ans et +</span>
+    </div>
+    <div class="grid-2">
+      <div class="card">
+        <h3><span class="dot" style="background:var(--purple)"></span>Objectifs de vie</h3>
+        <table>
+          <thead><tr><th>Objectif</th><th>Montant cible ($)</th><th>Épargné ($)</th><th>Horizon (ans)</th><th></th></tr></thead>
+          <tbody id="life-goals-body"></tbody>
+        </table>
+        <button class="add-row-btn" onclick="addRow('life-goals')">+ Ajouter objectif</button>
+      </div>
+      <div class="card">
+        <h3><span class="dot" style="background:var(--blue)"></span>Investissements</h3>
+        <table>
+          <thead><tr><th>Actif</th><th>Type</th><th>Valeur actuelle ($)</th><th>Rendement (%)</th><th></th></tr></thead>
+          <tbody id="investments-body"></tbody>
+        </table>
+        <button class="add-row-btn" onclick="addRow('investments')">+ Ajouter investissement</button>
+      </div>
+    </div>
+    <div class="card">
+      <h3><span class="dot" style="background:var(--yellow)"></span>Projection retraite / indépendance financière</h3>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:20px;margin-bottom:20px">
+        <div>
+          <div style="color:var(--muted);font-size:12px;margin-bottom:6px">Épargne mensuelle cible</div>
+          <input class="editable amount" id="retire-monthly" type="number" placeholder="500" onchange="saveAll()">
+        </div>
+        <div>
+          <div style="color:var(--muted);font-size:12px;margin-bottom:6px">Rendement annuel estimé (%)</div>
+          <input class="editable" id="retire-rate" type="number" placeholder="7" onchange="saveAll()">
+        </div>
+        <div>
+          <div style="color:var(--muted);font-size:12px;margin-bottom:6px">Horizon (années)</div>
+          <input class="editable" id="retire-years" type="number" placeholder="30" onchange="saveAll()">
+        </div>
+        <div>
+          <div style="color:var(--muted);font-size:12px;margin-bottom:6px">Capital projeté</div>
+          <div id="retire-result" style="font-size:20px;font-weight:700;color:var(--purple)">$0</div>
+        </div>
+      </div>
+      <div class="chart-wrap" style="height:220px"><canvas id="retire-chart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- ===================== TAB: PATRIMOINE ===================== -->
+  <div id="tab-patrimoine" class="tab-content">
+    <div class="horizon-header"><h2>Bilan Patrimonial</h2></div>
+    <div class="grid-2">
+      <div class="card">
+        <h3><span class="dot" style="background:var(--green)"></span>Actifs</h3>
+        <table>
+          <thead><tr><th>Actif</th><th>Catégorie</th><th style="text-align:right">Valeur ($)</th><th></th></tr></thead>
+          <tbody id="assets-body"></tbody>
+        </table>
+        <button class="add-row-btn" onclick="addRow('assets')">+ Ajouter actif</button>
+        <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);display:flex;justify-content:space-between">
+          <span style="color:var(--muted)">Total Actifs</span>
+          <span id="total-assets" style="font-weight:700;color:var(--green)">$0</span>
+        </div>
+      </div>
+      <div class="card">
+        <h3><span class="dot" style="background:var(--red)"></span>Passifs (Dettes)</h3>
+        <table>
+          <thead><tr><th>Passif</th><th>Catégorie</th><th style="text-align:right">Solde ($)</th><th></th></tr></thead>
+          <tbody id="liabilities-body"></tbody>
+        </table>
+        <button class="add-row-btn" onclick="addRow('liabilities')">+ Ajouter passif</button>
+        <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);display:flex;justify-content:space-between">
+          <span style="color:var(--muted)">Total Passifs</span>
+          <span id="total-liabilities" style="font-weight:700;color:var(--red)">$0</span>
+        </div>
+      </div>
+    </div>
+    <div class="grid-2">
+      <div class="card">
+        <h3><span class="dot" style="background:var(--purple)"></span>Patrimoine Net</h3>
+        <div style="text-align:center;padding:20px 0">
+          <div style="font-size:42px;font-weight:700" id="patrimoine-net">$0</div>
+          <div style="color:var(--muted);margin-top:8px">Actifs − Passifs</div>
+        </div>
+        <div class="chart-wrap" style="height:180px"><canvas id="patrimoine-chart"></canvas></div>
+      </div>
+      <div class="card">
+        <h3><span class="dot" style="background:var(--blue)"></span>Historique Patrimoine Net</h3>
+        <table>
+          <thead><tr><th>Mois</th><th style="text-align:right">Patrimoine net ($)</th><th></th></tr></thead>
+          <tbody id="networth-history-body"></tbody>
+        </table>
+        <button class="add-row-btn" onclick="addRow('networth-history')">+ Ajouter entrée</button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- end container -->
+
+<script>
+// ─── State ────────────────────────────────────────────────────────────────────
+let currentMonth = { year: 2026, month: 6 }; // 0-based: 6 = juillet
+let charts = {};
+
+const MONTHS_FR = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+
+// ─── Table configs ─────────────────────────────────────────────────────────
+const TABLE_CONFIGS = {
+  income: {
+    cols: [
+      { key:'name', label:'Source', ph:'Ex: Salaire', cls:'' },
+      { key:'cat',  label:'Catégorie', ph:'Ex: Emploi', cls:'category' },
+      { key:'amt',  label:'Montant', ph:'0', cls:'amount', type:'number' }
+    ]
+  },
+  fixed: {
+    cols: [
+      { key:'name', label:'Description', ph:'Ex: Loyer', cls:'' },
+      { key:'cat',  label:'Catégorie', ph:'Ex: Logement', cls:'category' },
+      { key:'amt',  label:'Montant', ph:'0', cls:'amount expense', type:'number' }
+    ]
+  },
+  variable: {
+    cols: [
+      { key:'name',   label:'Description', ph:'Ex: Épicerie', cls:'' },
+      { key:'cat',    label:'Catégorie', ph:'Ex: Alimentation', cls:'category' },
+      { key:'budget', label:'Budget', ph:'0', cls:'amount expense', type:'number', align:'right' },
+      { key:'real',   label:'Réel', ph:'0', cls:'amount expense', type:'number', align:'right' }
+    ]
+  },
+  emergency: {
+    cols: [
+      { key:'name',    label:'Objectif', ph:'Ex: Fonds urgence 3 mois', cls:'' },
+      { key:'target',  label:'Cible ($)', ph:'0', cls:'amount', type:'number' },
+      { key:'current', label:'Actuel ($)', ph:'0', cls:'amount expense', type:'number' }
+    ]
+  },
+  upcoming: {
+    cols: [
+      { key:'name', label:'Description', ph:'Ex: Assurance auto', cls:'' },
+      { key:'month',label:'Mois', ph:'Ex: Août 2026', cls:'category' },
+      { key:'amt',  label:'Montant', ph:'0', cls:'amount expense', type:'number' }
+    ]
+  },
+  'debt-short': {
+    cols: [
+      { key:'name',    label:'Créancier', ph:'Ex: Visa', cls:'' },
+      { key:'balance', label:'Solde ($)', ph:'0', cls:'amount expense', type:'number' },
+      { key:'payment', label:'Pmt/mois ($)', ph:'0', cls:'amount expense', type:'number' },
+      { key:'date',    label:'Échéance', ph:'2026-09-01', cls:'', inputType:'date' },
+      { key:'priority',label:'Priorité', ph:'Haute', cls:'category' }
+    ]
+  },
+  'savings-goals': {
+    cols: [
+      { key:'name',    label:'Projet', ph:'Ex: Voyage', cls:'' },
+      { key:'target',  label:'Cible ($)', ph:'0', cls:'amount', type:'number' },
+      { key:'saved',   label:'Épargné ($)', ph:'0', cls:'amount expense', type:'number' },
+      { key:'date',    label:'Échéance', ph:'2027-06-01', cls:'category', inputType:'date' }
+    ]
+  },
+  'debt-mid': {
+    cols: [
+      { key:'name',    label:'Créancier', ph:'Ex: Prêt auto', cls:'' },
+      { key:'balance', label:'Solde ($)', ph:'0', cls:'amount expense', type:'number' },
+      { key:'rate',    label:'Taux (%)', ph:'0', cls:'amount', type:'number' },
+      { key:'payment', label:'Pmt/mois ($)', ph:'0', cls:'amount expense', type:'number' }
+    ]
+  },
+  'life-goals': {
+    cols: [
+      { key:'name',    label:'Objectif', ph:'Ex: Maison', cls:'' },
+      { key:'target',  label:'Cible ($)', ph:'0', cls:'amount', type:'number' },
+      { key:'saved',   label:'Épargné ($)', ph:'0', cls:'amount expense', type:'number' },
+      { key:'years',   label:'Horizon (ans)', ph:'10', cls:'category', type:'number' }
+    ]
+  },
+  investments: {
+    cols: [
+      { key:'name',   label:'Actif', ph:'Ex: REER', cls:'' },
+      { key:'type',   label:'Type', ph:'Ex: Actions', cls:'category' },
+      { key:'value',  label:'Valeur ($)', ph:'0', cls:'amount', type:'number' },
+      { key:'yield',  label:'Rendement (%)', ph:'7', cls:'amount', type:'number' }
+    ]
+  },
+  assets: {
+    cols: [
+      { key:'name', label:'Actif', ph:'Ex: Compte épargne', cls:'' },
+      { key:'cat',  label:'Catégorie', ph:'Ex: Liquidités', cls:'category' },
+      { key:'val',  label:'Valeur ($)', ph:'0', cls:'amount', type:'number' }
+    ]
+  },
+  liabilities: {
+    cols: [
+      { key:'name', label:'Passif', ph:'Ex: Prêt étudiant', cls:'' },
+      { key:'cat',  label:'Catégorie', ph:'Ex: Dette', cls:'category' },
+      { key:'val',  label:'Solde ($)', ph:'0', cls:'amount expense', type:'number' }
+    ]
+  },
+  'networth-history': {
+    cols: [
+      { key:'month', label:'Mois', ph:'Ex: Juillet 2026', cls:'' },
+      { key:'val',   label:'Patrimoine net ($)', ph:'0', cls:'amount', type:'number' }
+    ]
+  }
+};
+
+// ─── Default data ──────────────────────────────────────────────────────────
+const DEFAULTS = {
+  income: [
+    { name:'Salaire principal', cat:'Emploi', amt:'0' },
+    { name:'Revenu secondaire', cat:'Freelance', amt:'0' }
+  ],
+  fixed: [
+    { name:'Loyer / Hypothèque', cat:'Logement', amt:'0' },
+    { name:'Assurance auto', cat:'Assurance', amt:'0' },
+    { name:'Assurance vie/santé', cat:'Assurance', amt:'0' },
+    { name:'Internet', cat:'Abonnements', amt:'0' },
+    { name:'Téléphone', cat:'Abonnements', amt:'0' }
+  ],
+  variable: [
+    { name:'Épicerie', cat:'Alimentation', budget:'0', real:'0' },
+    { name:'Restaurants / Sorties', cat:'Loisirs', budget:'0', real:'0' },
+    { name:'Transport / Essence', cat:'Transport', budget:'0', real:'0' },
+    { name:'Vêtements', cat:'Shopping', budget:'0', real:'0' },
+    { name:'Divertissement', cat:'Loisirs', budget:'0', real:'0' }
+  ],
+  emergency: [],
+  upcoming: [],
+  'debt-short': [],
+  'savings-goals': [],
+  'debt-mid': [],
+  'life-goals': [],
+  investments: [],
+  assets: [
+    { name:'Compte chèques', cat:'Liquidités', val:'0' },
+    { name:'Compte épargne', cat:'Liquidités', val:'0' }
+  ],
+  liabilities: [],
+  'networth-history': []
+};
+
+// ─── Storage key ──────────────────────────────────────────────────────────
+function storageKey(tableId) {
+  return `finances_${currentMonth.year}_${currentMonth.month}_${tableId}`;
+}
+function globalKey(k) { return `finances_global_${k}`; }
+
+// ─── Load / Save ──────────────────────────────────────────────────────────
+function loadTable(id) {
+  try {
+    const d = localStorage.getItem(storageKey(id));
+    return d ? JSON.parse(d) : JSON.parse(JSON.stringify(DEFAULTS[id] || []));
+  } catch { return JSON.parse(JSON.stringify(DEFAULTS[id] || [])); }
+}
+
+function saveTable(id) {
+  const rows = readTableRows(id);
+  localStorage.setItem(storageKey(id), JSON.stringify(rows));
+}
+
+function readTableRows(id) {
+  const tbody = document.getElementById(id + '-body');
+  if (!tbody) return [];
+  const cfg = TABLE_CONFIGS[id];
+  return Array.from(tbody.querySelectorAll('tr')).map(tr => {
+    const row = {};
+    cfg.cols.forEach((col, i) => {
+      const inp = tr.querySelector(`[data-col="${col.key}"]`);
+      row[col.key] = inp ? inp.value : '';
+    });
+    return row;
+  });
+}
+
+function saveAll() {
+  Object.keys(TABLE_CONFIGS).forEach(saveTable);
+  // global fields
+  ['retire-monthly','retire-rate','retire-years'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) localStorage.setItem(globalKey(id), el.value);
+  });
+  recalc();
+  showToast();
+}
+
+function showToast() {
+  let t = document.getElementById('toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'toast';
+    t.style.cssText = 'position:fixed;bottom:24px;right:24px;background:#00d26a;color:#000;padding:10px 20px;border-radius:8px;font-weight:700;font-size:13px;z-index:999;transition:opacity 0.4s';
+    document.body.appendChild(t);
+  }
+  t.textContent = '✓ Sauvegardé';
+  t.style.opacity = '1';
+  setTimeout(() => t.style.opacity = '0', 2000);
+}
+
+// ─── Render tables ─────────────────────────────────────────────────────────
+function renderTable(id) {
+  const tbody = document.getElementById(id + '-body');
+  if (!tbody) return;
+  const cfg = TABLE_CONFIGS[id];
+  const data = loadTable(id);
+  tbody.innerHTML = '';
+  data.forEach(row => appendRow(id, row));
+}
+
+function appendRow(id, data = {}) {
+  const tbody = document.getElementById(id + '-body');
+  const cfg = TABLE_CONFIGS[id];
+  const tr = document.createElement('tr');
+  cfg.cols.forEach(col => {
+    const td = document.createElement('td');
+    if (col.align) td.style.textAlign = col.align;
+    const inp = document.createElement('input');
+    inp.className = 'editable ' + (col.cls || '');
+    inp.placeholder = col.ph || '';
+    inp.value = data[col.key] || '';
+    inp.dataset.col = col.key;
+    if (col.type === 'number') inp.type = 'number';
+    if (col.inputType === 'date') inp.type = 'date';
+    inp.addEventListener('input', () => { saveAll(); });
+    td.appendChild(inp);
+    tr.appendChild(td);
+  });
+  // delete button
+  const tdDel = document.createElement('td');
+  tdDel.style.width = '28px';
+  const btn = document.createElement('button');
+  btn.className = 'del-btn';
+  btn.textContent = '×';
+  btn.onclick = () => { tr.remove(); saveAll(); };
+  tdDel.appendChild(btn);
+  tr.appendChild(tdDel);
+  tbody.appendChild(tr);
+}
+
+function addRow(id) { appendRow(id, {}); saveAll(); }
+
+// ─── Calculations ──────────────────────────────────────────────────────────
+function num(v) { return parseFloat(v) || 0; }
+function fmt(v) { return '$' + Math.abs(v).toLocaleString('fr-CA', {minimumFractionDigits:0,maximumFractionDigits:0}); }
+
+function recalc() {
+  const incomeRows   = readTableRows('income');
+  const fixedRows    = readTableRows('fixed');
+  const variableRows = readTableRows('variable');
+  const assetRows    = readTableRows('assets');
+  const liabRows     = readTableRows('liabilities');
+  const investRows   = readTableRows('investments');
+
+  const totalIncome  = incomeRows.reduce((s,r) => s + num(r.amt), 0);
+  const totalFixed   = fixedRows.reduce((s,r) => s + num(r.amt), 0);
+  const totalVarBudget = variableRows.reduce((s,r) => s + num(r.budget), 0);
+  const totalVarReal   = variableRows.reduce((s,r) => s + num(r.real), 0);
+  const totalExpenses  = totalFixed + totalVarReal;
+  const net            = totalIncome - totalExpenses;
+  const saveRate       = totalIncome > 0 ? (net / totalIncome * 100) : 0;
+
+  const totalAssets = assetRows.reduce((s,r) => s + num(r.val), 0)
+                    + investRows.reduce((s,r) => s + num(r.value), 0);
+  const totalLiab   = liabRows.reduce((s,r) => s + num(r.val), 0);
+  const netWorth    = totalAssets - totalLiab;
+
+  // KPIs
+  set('kpi-income',   fmt(totalIncome));
+  set('kpi-expenses', fmt(totalExpenses));
+  const netEl = document.getElementById('kpi-net');
+  netEl.textContent = (net >= 0 ? '+' : '-') + fmt(net);
+  netEl.style.color = net >= 0 ? 'var(--green)' : 'var(--red)';
+  set('kpi-saverate', saveRate.toFixed(1) + '%');
+  const kwEl = document.getElementById('kpi-networth');
+  kwEl.textContent = fmt(netWorth);
+  kwEl.style.color = netWorth >= 0 ? 'var(--purple)' : 'var(--red)';
+
+  // Summary
+  set('sum-var-budget', fmt(totalVarBudget));
+  set('sum-var-real',   fmt(totalVarReal));
+  const diff = totalVarBudget - totalVarReal;
+  const diffEl = document.getElementById('sum-var-diff');
+  diffEl.textContent = (diff >= 0 ? '+' : '-') + fmt(diff);
+  diffEl.style.color = diff >= 0 ? 'var(--green)' : 'var(--red)';
+  set('sum-saveable', fmt(net > 0 ? net : 0));
+
+  // Assets / Liabilities
+  set('total-assets',       fmt(totalAssets));
+  set('total-liabilities',  fmt(totalLiab));
+  const pnEl = document.getElementById('patrimoine-net');
+  pnEl.textContent = fmt(netWorth);
+  pnEl.style.color = netWorth >= 0 ? 'var(--green)' : 'var(--red)';
+
+  // Charts
+  renderDonut(fixedRows, variableRows);
+  renderPatrimoine(totalAssets, totalLiab);
+  renderProjection(net);
+  renderRetire();
+  renderSavingsGoalBars();
+}
+
+function set(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = val;
+}
+
+// ─── Donut chart ───────────────────────────────────────────────────────────
+function renderDonut(fixedRows, variableRows) {
+  const cats = {};
+  fixedRows.forEach(r => {
+    cats[r.cat || 'Autre'] = (cats[r.cat || 'Autre'] || 0) + num(r.amt);
+  });
+  variableRows.forEach(r => {
+    cats[r.cat || 'Autre'] = (cats[r.cat || 'Autre'] || 0) + num(r.real);
+  });
+  const labels = Object.keys(cats).filter(k => cats[k] > 0);
+  const data   = labels.map(k => cats[k]);
+  const colors = ['#ff4d6d','#ffd166','#4d79ff','#00d26a','#a855f7','#f97316','#06b6d4','#ec4899'];
+
+  if (charts.donut) charts.donut.destroy();
+  const ctx = document.getElementById('donut-chart').getContext('2d');
+  charts.donut = new Chart(ctx, {
+    type: 'doughnut',
+    data: { labels, datasets: [{ data, backgroundColor: colors.slice(0, labels.length), borderWidth: 0 }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'right', labels: { color: '#94a3b8', font: { size: 11 }, boxWidth: 12 } }
+      }
+    }
+  });
+}
+
+// ─── Patrimoine chart ──────────────────────────────────────────────────────
+function renderPatrimoine(assets, liab) {
+  if (charts.patrimoine) charts.patrimoine.destroy();
+  const ctx = document.getElementById('patrimoine-chart').getContext('2d');
+  charts.patrimoine = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ['Actifs', 'Passifs', 'Patrimoine Net'],
+      datasets: [{
+        data: [assets, liab, assets - liab],
+        backgroundColor: ['rgba(0,210,106,0.7)', 'rgba(255,77,109,0.7)', 'rgba(168,85,247,0.7)'],
+        borderRadius: 6
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#94a3b8' } },
+        y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#94a3b8', callback: v => '$'+v.toLocaleString() } }
+      }
+    }
+  });
+}
+
+// ─── Projection chart (12 mois) ────────────────────────────────────────────
+function renderProjection(monthlyNet) {
+  const labels = [];
+  const data   = [];
+  let cumul = 0;
+  for (let i = 0; i < 12; i++) {
+    const m = (currentMonth.month + i) % 12;
+    labels.push(MONTHS_FR[m].substring(0,3));
+    cumul += monthlyNet;
+    data.push(Math.round(cumul));
+  }
+  if (charts.projection) charts.projection.destroy();
+  const ctx = document.getElementById('projection-chart').getContext('2d');
+  charts.projection = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Épargne cumulée', data,
+        borderColor: '#4d79ff', backgroundColor: 'rgba(77,121,255,0.1)',
+        fill: true, tension: 0.4, pointBackgroundColor: '#4d79ff'
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { labels: { color: '#94a3b8' } } },
+      scales: {
+        x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#94a3b8' } },
+        y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#94a3b8', callback: v => '$'+v.toLocaleString() } }
+      }
+    }
+  });
+}
+
+// ─── Retire chart ──────────────────────────────────────────────────────────
+function renderRetire() {
+  const monthly = num(document.getElementById('retire-monthly').value) || 500;
+  const rate    = (num(document.getElementById('retire-rate').value) || 7) / 100 / 12;
+  const years   = num(document.getElementById('retire-years').value) || 30;
+  const n       = years * 12;
+  const fv      = rate > 0 ? monthly * ((Math.pow(1+rate,n)-1)/rate) : monthly * n;
+  document.getElementById('retire-result').textContent = '$' + Math.round(fv).toLocaleString();
+
+  const labels = [], data = [];
+  for (let y = 1; y <= years; y++) {
+    const m = y * 12;
+    const v = rate > 0 ? monthly * ((Math.pow(1+rate,m)-1)/rate) : monthly * m;
+    labels.push(y+'a');
+    data.push(Math.round(v));
+  }
+  if (charts.retire) charts.retire.destroy();
+  const ctx = document.getElementById('retire-chart').getContext('2d');
+  charts.retire = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Capital projeté', data,
+        borderColor: '#a855f7', backgroundColor: 'rgba(168,85,247,0.1)',
+        fill: true, tension: 0.3, pointRadius: 0
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { labels: { color: '#94a3b8' } } },
+      scales: {
+        x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#94a3b8', maxTicksLimit: 10 } },
+        y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#94a3b8', callback: v => '$'+v.toLocaleString() } }
+      }
+    }
+  });
+}
+
+// ─── Savings goal progress bars ───────────────────────────────────────────
+function renderSavingsGoalBars() {
+  const rows = readTableRows('savings-goals');
+  const wrap = document.getElementById('savings-goals-bars');
+  if (!wrap) return;
+  wrap.innerHTML = '';
+  rows.forEach(r => {
+    const target = num(r.target);
+    const saved  = num(r.saved);
+    const pct    = target > 0 ? Math.min(100, saved/target*100) : 0;
+    const color  = pct >= 100 ? 'var(--green)' : pct >= 50 ? 'var(--blue)' : 'var(--yellow)';
+    wrap.innerHTML += `
+      <div class="goal-item">
+        <div class="goal-header">
+          <span class="goal-name">${r.name || '—'}</span>
+          <span class="goal-pct">${fmt(saved)} / ${fmt(target)} (${pct.toFixed(0)}%)</span>
+        </div>
+        <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${color}"></div></div>
+      </div>`;
+  });
+}
+
+// ─── Month navigation ─────────────────────────────────────────────────────
+function changeMonth(dir) {
+  currentMonth.month += dir;
+  if (currentMonth.month > 11) { currentMonth.month = 0; currentMonth.year++; }
+  if (currentMonth.month < 0)  { currentMonth.month = 11; currentMonth.year--; }
+  document.getElementById('current-month').textContent = MONTHS_FR[currentMonth.month] + ' ' + currentMonth.year;
+  init();
+}
+
+// ─── Tabs ────────────────────────────────────────────────────────────────
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelector(`[onclick="switchTab('${name}')"]`).classList.add('active');
+  document.getElementById('tab-' + name).classList.add('active');
+  recalc();
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────
+function init() {
+  document.getElementById('current-month').textContent = MONTHS_FR[currentMonth.month] + ' ' + currentMonth.year;
+  Object.keys(TABLE_CONFIGS).forEach(renderTable);
+
+  // Global fields
+  ['retire-monthly','retire-rate','retire-years'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      const v = localStorage.getItem(globalKey(id));
+      if (v) el.value = v;
+      el.addEventListener('input', () => { saveAll(); });
+    }
+  });
+
+  recalc();
+}
+
+window.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
