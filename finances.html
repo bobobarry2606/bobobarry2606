@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Tableau de Bord Financier — Juillet 2026</title>
+<!-- ETH orange accent -->
+<style>:root{--eth:#f7931a;--eth-bg:rgba(247,147,26,0.12);}</style>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
   :root {
@@ -167,12 +169,43 @@
     background-repeat: no-repeat; background-position: right 8px center;
     padding-right: 24px; cursor: pointer;
   }
+  /* Bi-weekly pill */
+  .biweekly-pill {
+    display:inline-flex; align-items:center; gap:6px;
+    background:rgba(77,121,255,0.12); border:1px solid rgba(77,121,255,0.3);
+    border-radius:20px; padding:4px 14px; font-size:12px; font-weight:600; color:var(--blue);
+  }
+  .biweekly-pill .sep { color:var(--border); }
+  /* ETH styles */
+  .eth-accent { color: var(--eth); }
+  .kpi-card.eth .value { color: var(--eth); }
+  td.calc { color: var(--muted); font-size:12px; text-align:right; padding-right:12px; }
+  td.calc.pos { color: var(--green); }
+  td.calc.neg { color: var(--red); }
+  .eth-price-bar {
+    background: var(--card); border: 1px solid rgba(247,147,26,0.3);
+    border-radius:10px; padding:14px 20px; margin-bottom:20px;
+    display:flex; align-items:center; gap:24px; flex-wrap:wrap;
+  }
+  .eth-price-bar label { font-size:12px; color:var(--muted); }
+  .eth-price-bar input { background:transparent; border:1px solid rgba(247,147,26,0.4); color:var(--eth); font-size:18px; font-weight:700; font-family:inherit; border-radius:6px; padding:4px 10px; width:160px; outline:none; }
+  .eth-price-bar input:focus { border-color:var(--eth); }
+  .eth-price-bar .eth-stat { font-size:12px; color:var(--muted); }
+  .eth-price-bar .eth-stat span { font-size:16px; font-weight:700; color:var(--text); display:block; margin-top:2px; }
 </style>
 </head>
 <body>
 
 <header>
   <h1>💰 Dashboard <span>Finances Perso</span></h1>
+  <div class="biweekly-pill">
+    📅 Cycle bi-hebdomadaire &nbsp;<span class="sep">|</span>&nbsp;
+    Paie: <span id="header-paie" style="color:var(--green)">$0</span>
+    &nbsp;<span class="sep">|</span>&nbsp;
+    Dép/paie: <span id="header-dep" style="color:var(--red)">$0</span>
+    &nbsp;<span class="sep">|</span>&nbsp;
+    Libre/paie: <span id="header-libre">$0</span>
+  </div>
   <div class="month-nav">
     <button onclick="changeMonth(-1)">◀</button>
     <span id="current-month"></span>
@@ -215,6 +248,7 @@
   <!-- Tabs -->
   <div class="tabs">
     <div class="tab active" onclick="switchTab('mensuel')">📅 Mensuel</div>
+    <div class="tab" onclick="switchTab('crypto')">🟠 Wealthsimple / ETH</div>
     <div class="tab" onclick="switchTab('court')">⚡ Court terme</div>
     <div class="tab" onclick="switchTab('moyen')">📈 Moyen terme</div>
     <div class="tab" onclick="switchTab('long')">🏆 Long terme</div>
@@ -227,10 +261,10 @@
 
       <!-- Revenus -->
       <div class="card">
-        <h3><span class="dot" style="background:var(--green)"></span>Revenus</h3>
+        <h3><span class="dot" style="background:var(--green)"></span>Revenus <span style="font-size:10px;color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0">&nbsp;— entrer le montant mensuel</span></h3>
         <table>
           <thead><tr>
-            <th>Source</th><th>Catégorie</th><th style="text-align:right">Montant</th><th></th>
+            <th>Source</th><th>Catégorie</th><th style="text-align:right">Mensuel</th><th style="text-align:right;color:var(--blue)">Par paie (÷2)</th><th></th>
           </tr></thead>
           <tbody id="income-body"></tbody>
         </table>
@@ -239,10 +273,10 @@
 
       <!-- Dépenses fixes -->
       <div class="card">
-        <h3><span class="dot" style="background:var(--red)"></span>Dépenses Fixes</h3>
+        <h3><span class="dot" style="background:var(--red)"></span>Dépenses Fixes <span style="font-size:10px;color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0">&nbsp;— montant mensuel</span></h3>
         <table>
           <thead><tr>
-            <th>Description</th><th>Catégorie</th><th style="text-align:right">Montant</th><th></th>
+            <th>Description</th><th>Catégorie</th><th style="text-align:right">Mensuel</th><th style="text-align:right;color:var(--blue)">Par paie (÷2)</th><th></th>
           </tr></thead>
           <tbody id="fixed-body"></tbody>
         </table>
@@ -273,7 +307,7 @@
     <!-- Résumé mensuel -->
     <div class="card">
       <h3><span class="dot" style="background:var(--purple)"></span>Résumé & Analyse du mois</h3>
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:20px">
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:20px;margin-bottom:20px">
         <div>
           <div style="color:var(--muted);font-size:12px;margin-bottom:4px">Budget dépenses variables</div>
           <div id="sum-var-budget" style="font-size:18px;font-weight:700;color:var(--yellow)">$0</div>
@@ -289,6 +323,99 @@
         <div>
           <div style="color:var(--muted);font-size:12px;margin-bottom:4px">Montant disponible à épargner</div>
           <div id="sum-saveable" style="font-size:18px;font-weight:700;color:var(--green)">$0</div>
+        </div>
+      </div>
+      <!-- Bi-weekly breakdown -->
+      <div style="border-top:1px solid var(--border);padding-top:16px">
+        <div style="font-size:11px;font-weight:600;color:var(--blue);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:12px">Vue par paie (bi-hebdomadaire — 26 paies/an)</div>
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:16px">
+          <div>
+            <div style="color:var(--muted);font-size:11px;margin-bottom:4px">Revenu / paie</div>
+            <div id="bw-income" style="font-size:17px;font-weight:700;color:var(--green)">$0</div>
+          </div>
+          <div>
+            <div style="color:var(--muted);font-size:11px;margin-bottom:4px">Fixes / paie</div>
+            <div id="bw-fixed" style="font-size:17px;font-weight:700;color:var(--red)">$0</div>
+          </div>
+          <div>
+            <div style="color:var(--muted);font-size:11px;margin-bottom:4px">Variables / paie</div>
+            <div id="bw-var" style="font-size:17px;font-weight:700;color:var(--yellow)">$0</div>
+          </div>
+          <div>
+            <div style="color:var(--muted);font-size:11px;margin-bottom:4px">ETH / paie</div>
+            <div id="bw-eth" style="font-size:17px;font-weight:700;color:var(--eth)">$0</div>
+          </div>
+          <div>
+            <div style="color:var(--muted);font-size:11px;margin-bottom:4px">Libre / paie</div>
+            <div id="bw-free" style="font-size:17px;font-weight:700">$0</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== TAB: WEALTHSIMPLE / ETH ===================== -->
+  <div id="tab-crypto" class="tab-content">
+    <div class="horizon-header">
+      <h2>Wealthsimple — ETH</h2>
+      <span class="horizon-badge" style="background:var(--eth-bg);color:var(--eth)">DCA Bi-hebdomadaire</span>
+    </div>
+
+    <!-- Prix ETH actuel + KPIs -->
+    <div class="eth-price-bar">
+      <div>
+        <label>Prix ETH actuel (CAD $)</label>
+        <input type="number" id="eth-price-now" placeholder="Ex: 4200" oninput="saveAll()">
+      </div>
+      <div class="eth-stat">Total investi (CAD)<span id="eth-kpi-invested">$0</span></div>
+      <div class="eth-stat">ETH total accumulé<span id="eth-kpi-total-eth" class="eth-accent">0.0000 ETH</span></div>
+      <div class="eth-stat">Valeur actuelle (CAD)<span id="eth-kpi-value">$0</span></div>
+      <div class="eth-stat">P&L total<span id="eth-kpi-pnl">$0</span></div>
+      <div class="eth-stat">P&L %<span id="eth-kpi-pnl-pct">0%</span></div>
+      <div class="eth-stat">Prochain achat prévu<span id="eth-kpi-next" style="color:var(--blue)">—</span></div>
+    </div>
+
+    <!-- Journal des achats -->
+    <div class="card" style="margin-bottom:20px">
+      <h3><span class="dot" style="background:var(--eth)"></span>Journal des achats DCA — ETH (Wealthsimple)</h3>
+      <table>
+        <thead><tr>
+          <th>Date d'achat</th>
+          <th style="text-align:right">Investi (CAD $)</th>
+          <th style="text-align:right">Prix ETH (CAD $)</th>
+          <th style="text-align:right;color:var(--eth)">ETH acquis</th>
+          <th style="text-align:right;color:var(--green)">Valeur actuelle</th>
+          <th style="text-align:right">P&L ($)</th>
+          <th style="text-align:right">P&L (%)</th>
+          <th>Notes</th>
+          <th></th>
+        </tr></thead>
+        <tbody id="eth-dca-body"></tbody>
+      </table>
+      <button class="add-row-btn" onclick="addEthRow()">+ Ajouter un achat</button>
+    </div>
+
+    <div class="grid-2">
+      <!-- Graphique valeur vs coût -->
+      <div class="card">
+        <h3><span class="dot" style="background:var(--eth)"></span>Évolution : Valeur vs Coût cumulé</h3>
+        <div class="chart-wrap" style="height:240px"><canvas id="eth-chart"></canvas></div>
+      </div>
+      <!-- Planification prochains achats -->
+      <div class="card">
+        <h3><span class="dot" style="background:var(--blue)"></span>Planification — Prochains achats prévus</h3>
+        <table>
+          <thead><tr><th>Date prévue</th><th style="text-align:right">Montant prévu (CAD $)</th><th>Statut</th><th></th></tr></thead>
+          <tbody id="eth-planned-body"></tbody>
+        </table>
+        <button class="add-row-btn" onclick="addRow('eth-planned')">+ Planifier un achat</button>
+        <div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--border)">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:8px">MONTANT PAR DÉFAUT (bi-hebdo)</div>
+          <div style="display:flex;align-items:center;gap:12px">
+            <input class="editable amount" id="eth-default-amount" type="number" placeholder="Ex: 100" style="width:120px" oninput="saveAll()">
+            <span style="color:var(--muted);font-size:13px">CAD $ par paie</span>
+            <span id="eth-yearly-proj" style="color:var(--eth);font-size:13px;font-weight:600"></span>
+          </div>
         </div>
       </div>
     </div>
@@ -463,6 +590,9 @@
 // ─── State ────────────────────────────────────────────────────────────────────
 let currentMonth = { year: 2026, month: 6 }; // 0-based: 6 = juillet
 let charts = {};
+// Monthly → bi-weekly: ÷ 2 (2 paies par mois en cycle fixe)
+// Annual: × 26 paies/an
+const BW = 2; // diviseur mensuel → par paie
 
 const MONTHS_FR = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
 
@@ -564,6 +694,13 @@ const TABLE_CONFIGS = {
       { key:'month', label:'Mois', ph:'Ex: Juillet 2026', cls:'' },
       { key:'val',   label:'Patrimoine net ($)', ph:'0', cls:'amount', type:'number' }
     ]
+  },
+  'eth-planned': {
+    cols: [
+      { key:'date',   label:'Date prévue', ph:'', cls:'', inputType:'date' },
+      { key:'amount', label:'Montant ($)', ph:'100', cls:'amount expense', type:'number' },
+      { key:'status', label:'Statut', ph:'Prévu', cls:'category' }
+    ]
   }
 };
 
@@ -599,7 +736,8 @@ const DEFAULTS = {
     { name:'Compte épargne', cat:'Liquidités', val:'0' }
   ],
   liabilities: [],
-  'networth-history': []
+  'networth-history': [],
+  'eth-planned': []
 };
 
 // ─── Storage key ──────────────────────────────────────────────────────────
@@ -637,8 +775,10 @@ function readTableRows(id) {
 
 function saveAll() {
   Object.keys(TABLE_CONFIGS).forEach(saveTable);
+  // ETH DCA rows
+  saveEthRows();
   // global fields
-  ['retire-monthly','retire-rate','retire-years'].forEach(id => {
+  ['retire-monthly','retire-rate','retire-years','eth-price-now','eth-default-amount'].forEach(id => {
     const el = document.getElementById(id);
     if (el) localStorage.setItem(globalKey(id), el.value);
   });
@@ -687,6 +827,22 @@ function appendRow(id, data = {}) {
     td.appendChild(inp);
     tr.appendChild(td);
   });
+  // bi-weekly computed column for income & fixed
+  if (id === 'income' || id === 'fixed') {
+    const tdBw = document.createElement('td');
+    tdBw.className = 'calc';
+    tdBw.dataset.bw = '1';
+    tdBw.style.textAlign = 'right';
+    // compute initial value
+    const amtKey = id === 'income' ? 'amt' : 'amt';
+    tdBw.textContent = fmtBw(num(data.amt));
+    tr.appendChild(tdBw);
+    // update on input change
+    const amtInp = tr.querySelector('[data-col="amt"]');
+    if (amtInp) amtInp.addEventListener('input', () => {
+      tdBw.textContent = fmtBw(num(amtInp.value));
+    });
+  }
   // delete button
   const tdDel = document.createElement('td');
   tdDel.style.width = '28px';
@@ -701,9 +857,113 @@ function appendRow(id, data = {}) {
 
 function addRow(id) { appendRow(id, {}); saveAll(); }
 
+// ─── ETH DCA table ─────────────────────────────────────────────────────────
+function loadEthRows() {
+  try {
+    const d = localStorage.getItem(storageKey('eth-dca'));
+    return d ? JSON.parse(d) : [];
+  } catch { return []; }
+}
+
+function saveEthRows() {
+  const rows = readEthRows();
+  localStorage.setItem(storageKey('eth-dca'), JSON.stringify(rows));
+}
+
+function readEthRows() {
+  const tbody = document.getElementById('eth-dca-body');
+  if (!tbody) return [];
+  return Array.from(tbody.querySelectorAll('tr')).map(tr => ({
+    date:   tr.querySelector('[data-col="date"]')?.value || '',
+    amount: tr.querySelector('[data-col="amount"]')?.value || '',
+    price:  tr.querySelector('[data-col="price"]')?.value || '',
+    notes:  tr.querySelector('[data-col="notes"]')?.value || ''
+  }));
+}
+
+function renderEthTable() {
+  const tbody = document.getElementById('eth-dca-body');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+  loadEthRows().forEach(r => appendEthRow(r));
+}
+
+function appendEthRow(data = {}) {
+  const tbody = document.getElementById('eth-dca-body');
+  const tr = document.createElement('tr');
+
+  const mkInput = (col, ph, cls, type) => {
+    const td = document.createElement('td');
+    const inp = document.createElement('input');
+    inp.className = 'editable ' + (cls || '');
+    inp.placeholder = ph;
+    inp.value = data[col] || '';
+    inp.dataset.col = col;
+    if (type) inp.type = type;
+    inp.addEventListener('input', () => { updateEthRowCalcs(tr); saveAll(); });
+    td.appendChild(inp);
+    return td;
+  };
+
+  tr.appendChild(mkInput('date',   '',    '', 'date'));
+  tr.appendChild(mkInput('amount', '100', 'amount expense', 'number'));
+  tr.appendChild(mkInput('price',  '0',   'amount', 'number'));
+
+  // Computed: ETH acquis
+  const tdEth = document.createElement('td'); tdEth.className = 'calc'; tdEth.dataset.calc = 'eth'; tr.appendChild(tdEth);
+  // Computed: Valeur actuelle
+  const tdVal = document.createElement('td'); tdVal.className = 'calc'; tdVal.dataset.calc = 'val'; tr.appendChild(tdVal);
+  // Computed: P&L $
+  const tdPnl = document.createElement('td'); tdPnl.className = 'calc'; tdPnl.dataset.calc = 'pnl'; tr.appendChild(tdPnl);
+  // Computed: P&L %
+  const tdPct = document.createElement('td'); tdPct.className = 'calc'; tdPct.dataset.calc = 'pct'; tr.appendChild(tdPct);
+
+  tr.appendChild(mkInput('notes', 'Ex: DCA #1', 'category', ''));
+
+  const tdDel = document.createElement('td');
+  const btn = document.createElement('button');
+  btn.className = 'del-btn'; btn.textContent = '×';
+  btn.onclick = () => { tr.remove(); saveAll(); };
+  tdDel.appendChild(btn);
+  tr.appendChild(tdDel);
+
+  tbody.appendChild(tr);
+  updateEthRowCalcs(tr);
+}
+
+function updateEthRowCalcs(tr) {
+  const priceNow = num(document.getElementById('eth-price-now')?.value);
+  const amount   = num(tr.querySelector('[data-col="amount"]')?.value);
+  const priceBuy = num(tr.querySelector('[data-col="price"]')?.value);
+  const ethAcq   = priceBuy > 0 ? amount / priceBuy : 0;
+  const valNow   = ethAcq * priceNow;
+  const pnl      = valNow - amount;
+  const pnlPct   = amount > 0 ? (pnl / amount * 100) : 0;
+
+  const tdEth = tr.querySelector('[data-calc="eth"]');
+  const tdVal = tr.querySelector('[data-calc="val"]');
+  const tdPnl = tr.querySelector('[data-calc="pnl"]');
+  const tdPct = tr.querySelector('[data-calc="pct"]');
+
+  if (tdEth) tdEth.textContent = ethAcq > 0 ? ethAcq.toFixed(6) + ' Ξ' : '—';
+  if (tdVal) { tdVal.textContent = priceNow > 0 ? fmt(valNow) : '—'; tdVal.className = 'calc pos'; }
+  if (tdPnl) { tdPnl.textContent = pnl !== 0 ? (pnl >= 0 ? '+' : '') + fmt(pnl) : '—'; tdPnl.className = 'calc ' + (pnl >= 0 ? 'pos' : 'neg'); }
+  if (tdPct) { tdPct.textContent = pnlPct !== 0 ? (pnlPct >= 0 ? '+' : '') + pnlPct.toFixed(1) + '%' : '—'; tdPct.className = 'calc ' + (pnlPct >= 0 ? 'pos' : 'neg'); }
+}
+
+function addEthRow() { appendEthRow({}); saveAll(); }
+
+function refreshEthCalcs() {
+  document.querySelectorAll('#eth-dca-body tr').forEach(tr => updateEthRowCalcs(tr));
+}
+
 // ─── Calculations ──────────────────────────────────────────────────────────
 function num(v) { return parseFloat(v) || 0; }
 function fmt(v) { return '$' + Math.abs(v).toLocaleString('fr-CA', {minimumFractionDigits:0,maximumFractionDigits:0}); }
+function fmtBw(monthly) {
+  const bw = monthly / BW;
+  return '$' + bw.toLocaleString('fr-CA', {minimumFractionDigits:0,maximumFractionDigits:0}) + '/paie';
+}
 
 function recalc() {
   const incomeRows   = readTableRows('income');
@@ -712,23 +972,42 @@ function recalc() {
   const assetRows    = readTableRows('assets');
   const liabRows     = readTableRows('liabilities');
   const investRows   = readTableRows('investments');
+  const ethRows      = readEthRows();
 
-  const totalIncome  = incomeRows.reduce((s,r) => s + num(r.amt), 0);
-  const totalFixed   = fixedRows.reduce((s,r) => s + num(r.amt), 0);
+  const totalIncome    = incomeRows.reduce((s,r) => s + num(r.amt), 0);
+  const totalFixed     = fixedRows.reduce((s,r) => s + num(r.amt), 0);
   const totalVarBudget = variableRows.reduce((s,r) => s + num(r.budget), 0);
   const totalVarReal   = variableRows.reduce((s,r) => s + num(r.real), 0);
+
+  // ETH monthly equivalent (montant investi / mois courant)
+  const monthKey = `${currentMonth.year}-${String(currentMonth.month+1).padStart(2,'0')}`;
+  const ethMonthly = ethRows.filter(r => r.date && r.date.startsWith(monthKey)).reduce((s,r) => s + num(r.amount), 0);
+  // ETH bi-weekly default
+  const ethPerPaycheck = num(document.getElementById('eth-default-amount')?.value);
+
   const totalExpenses  = totalFixed + totalVarReal;
-  const net            = totalIncome - totalExpenses;
-  const saveRate       = totalIncome > 0 ? (net / totalIncome * 100) : 0;
+  const net            = totalIncome - totalExpenses - ethMonthly;
+  const saveRate       = totalIncome > 0 ? ((totalIncome - totalExpenses) / totalIncome * 100) : 0;
+
+  // ETH totals
+  const priceNow   = num(document.getElementById('eth-price-now')?.value);
+  const totalInvested = ethRows.reduce((s,r) => s + num(r.amount), 0);
+  const totalEth      = ethRows.reduce((s,r) => {
+    const p = num(r.price); return s + (p > 0 ? num(r.amount)/p : 0);
+  }, 0);
+  const totalEthValue = totalEth * priceNow;
+  const totalPnl      = totalEthValue - totalInvested;
+  const totalPnlPct   = totalInvested > 0 ? totalPnl/totalInvested*100 : 0;
 
   const totalAssets = assetRows.reduce((s,r) => s + num(r.val), 0)
-                    + investRows.reduce((s,r) => s + num(r.value), 0);
+                    + investRows.reduce((s,r) => s + num(r.value), 0)
+                    + totalEthValue;
   const totalLiab   = liabRows.reduce((s,r) => s + num(r.val), 0);
   const netWorth    = totalAssets - totalLiab;
 
-  // KPIs
+  // ── KPIs principales ──
   set('kpi-income',   fmt(totalIncome));
-  set('kpi-expenses', fmt(totalExpenses));
+  set('kpi-expenses', fmt(totalExpenses + ethMonthly));
   const netEl = document.getElementById('kpi-net');
   netEl.textContent = (net >= 0 ? '+' : '-') + fmt(net);
   netEl.style.color = net >= 0 ? 'var(--green)' : 'var(--red)';
@@ -737,28 +1016,66 @@ function recalc() {
   kwEl.textContent = fmt(netWorth);
   kwEl.style.color = netWorth >= 0 ? 'var(--purple)' : 'var(--red)';
 
-  // Summary
+  // ── Bi-weekly header ──
+  const bwIncome = totalIncome / BW;
+  const bwFixed  = totalFixed / BW;
+  const bwVar    = totalVarReal / BW;
+  const bwEth    = ethPerPaycheck;
+  const bwFree   = bwIncome - bwFixed - bwVar - bwEth;
+  const fmtS = v => '$' + Math.abs(v).toLocaleString('fr-CA',{maximumFractionDigits:0});
+  set('header-paie',  fmtS(bwIncome));
+  set('header-dep',   fmtS(bwFixed + bwVar));
+  const libreEl = document.getElementById('header-libre');
+  if (libreEl) { libreEl.textContent = (bwFree >= 0 ? '' : '-') + fmtS(bwFree); libreEl.style.color = bwFree >= 0 ? 'var(--green)' : 'var(--red)'; }
+
+  // ── Summary mensuel ──
   set('sum-var-budget', fmt(totalVarBudget));
   set('sum-var-real',   fmt(totalVarReal));
   const diff = totalVarBudget - totalVarReal;
   const diffEl = document.getElementById('sum-var-diff');
-  diffEl.textContent = (diff >= 0 ? '+' : '-') + fmt(diff);
-  diffEl.style.color = diff >= 0 ? 'var(--green)' : 'var(--red)';
+  if (diffEl) { diffEl.textContent = (diff >= 0 ? '+' : '-') + fmt(diff); diffEl.style.color = diff >= 0 ? 'var(--green)' : 'var(--red)'; }
   set('sum-saveable', fmt(net > 0 ? net : 0));
 
-  // Assets / Liabilities
+  // ── Bi-weekly breakdown ──
+  set('bw-income', fmtS(bwIncome));
+  set('bw-fixed',  fmtS(bwFixed));
+  set('bw-var',    fmtS(bwVar));
+  set('bw-eth',    fmtS(bwEth));
+  const bwFreeEl = document.getElementById('bw-free');
+  if (bwFreeEl) { bwFreeEl.textContent = (bwFree >= 0 ? '' : '-') + fmtS(bwFree); bwFreeEl.style.color = bwFree >= 0 ? 'var(--green)' : 'var(--red)'; }
+
+  // ── ETH KPIs ──
+  set('eth-kpi-invested',   fmt(totalInvested));
+  set('eth-kpi-total-eth',  totalEth.toFixed(6) + ' ETH');
+  set('eth-kpi-value',      priceNow > 0 ? fmt(totalEthValue) : '—');
+  const pnlEl = document.getElementById('eth-kpi-pnl');
+  if (pnlEl) { pnlEl.textContent = totalInvested > 0 ? (totalPnl >= 0 ? '+' : '') + fmt(totalPnl) : '—'; pnlEl.style.color = totalPnl >= 0 ? 'var(--green)' : 'var(--red)'; }
+  const pctEl = document.getElementById('eth-kpi-pnl-pct');
+  if (pctEl) { pctEl.textContent = totalInvested > 0 ? (totalPnlPct >= 0 ? '+' : '') + totalPnlPct.toFixed(1) + '%' : '—'; pctEl.style.color = totalPnlPct >= 0 ? 'var(--green)' : 'var(--red)'; }
+
+  // Prochain achat prévu
+  const planned = readTableRows('eth-planned').filter(r => r.date).sort((a,b) => a.date.localeCompare(b.date));
+  const nextBuy = planned.find(r => r.date >= new Date().toISOString().slice(0,10));
+  set('eth-kpi-next', nextBuy ? nextBuy.date + (nextBuy.amount ? ' — ' + fmt(num(nextBuy.amount)) : '') : '—');
+
+  // ETH yearly projection
+  const yearlyEl = document.getElementById('eth-yearly-proj');
+  if (yearlyEl && ethPerPaycheck > 0) yearlyEl.textContent = `→ ${fmt(ethPerPaycheck * 26)}/an investi`;
+
+  // ── Actifs / Passifs ──
   set('total-assets',       fmt(totalAssets));
   set('total-liabilities',  fmt(totalLiab));
   const pnEl = document.getElementById('patrimoine-net');
-  pnEl.textContent = fmt(netWorth);
-  pnEl.style.color = netWorth >= 0 ? 'var(--green)' : 'var(--red)';
+  if (pnEl) { pnEl.textContent = fmt(netWorth); pnEl.style.color = netWorth >= 0 ? 'var(--green)' : 'var(--red)'; }
 
-  // Charts
+  // ── Charts ──
   renderDonut(fixedRows, variableRows);
   renderPatrimoine(totalAssets, totalLiab);
   renderProjection(net);
   renderRetire();
   renderSavingsGoalBars();
+  renderEthChart(ethRows, priceNow);
+  refreshEthCalcs();
 }
 
 function set(id, val) {
@@ -913,6 +1230,47 @@ function renderSavingsGoalBars() {
   });
 }
 
+// ─── ETH chart ────────────────────────────────────────────────────────────
+function renderEthChart(ethRows, priceNow) {
+  const sorted = [...ethRows].filter(r => r.date && num(r.amount) > 0)
+    .sort((a,b) => a.date.localeCompare(b.date));
+  if (sorted.length === 0) { if (charts.eth) { charts.eth.destroy(); charts.eth = null; } return; }
+
+  const labels = [], costData = [], valueData = [];
+  let cumCost = 0, cumEth = 0;
+  sorted.forEach(r => {
+    const p = num(r.price);
+    const eth = p > 0 ? num(r.amount)/p : 0;
+    cumCost += num(r.amount);
+    cumEth  += eth;
+    labels.push(r.date);
+    costData.push(Math.round(cumCost));
+    valueData.push(priceNow > 0 ? Math.round(cumEth * priceNow) : null);
+  });
+
+  if (charts.eth) charts.eth.destroy();
+  const ctx = document.getElementById('eth-chart')?.getContext('2d');
+  if (!ctx) return;
+  charts.eth = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        { label:'Coût cumulé (CAD)', data: costData, borderColor:'#ff4d6d', backgroundColor:'rgba(255,77,109,0.08)', fill:true, tension:0.3, pointRadius:4 },
+        { label:'Valeur actuelle (CAD)', data: valueData, borderColor:'#f7931a', backgroundColor:'rgba(247,147,26,0.1)', fill:true, tension:0.3, pointRadius:4 }
+      ]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins: { legend:{ labels:{ color:'#94a3b8' } } },
+      scales: {
+        x:{ grid:{color:'rgba(255,255,255,0.04)'}, ticks:{color:'#94a3b8', maxTicksLimit:8} },
+        y:{ grid:{color:'rgba(255,255,255,0.04)'}, ticks:{color:'#94a3b8', callback: v=>'$'+v.toLocaleString()} }
+      }
+    }
+  });
+}
+
 // ─── Month navigation ─────────────────────────────────────────────────────
 function changeMonth(dir) {
   currentMonth.month += dir;
@@ -935,9 +1293,10 @@ function switchTab(name) {
 function init() {
   document.getElementById('current-month').textContent = MONTHS_FR[currentMonth.month] + ' ' + currentMonth.year;
   Object.keys(TABLE_CONFIGS).forEach(renderTable);
+  renderEthTable();
 
   // Global fields
-  ['retire-monthly','retire-rate','retire-years'].forEach(id => {
+  ['retire-monthly','retire-rate','retire-years','eth-price-now','eth-default-amount'].forEach(id => {
     const el = document.getElementById(id);
     if (el) {
       const v = localStorage.getItem(globalKey(id));
