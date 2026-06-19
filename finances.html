@@ -307,10 +307,10 @@
 
       <!-- Revenus -->
       <div class="card">
-        <h3><span class="dot" style="background:var(--green)"></span>Revenus <span style="font-size:10px;color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0">&nbsp;— entrer le montant mensuel</span></h3>
+        <h3><span class="dot" style="background:var(--green)"></span>Revenus <span style="font-size:10px;color:var(--blue);font-weight:500;text-transform:none;letter-spacing:0;background:rgba(77,121,255,0.1);padding:2px 6px;border-radius:4px">montant par paie (2 sem)</span></h3>
         <table>
           <thead><tr>
-            <th>Source</th><th>Catégorie</th><th style="text-align:right">Mensuel</th><th style="text-align:right;color:var(--blue)">Par paie (÷2)</th><th></th>
+            <th>Source</th><th>Catégorie</th><th style="text-align:right">Par paie (2 sem)</th><th></th>
           </tr></thead>
           <tbody id="income-body"></tbody>
         </table>
@@ -319,24 +319,24 @@
 
       <!-- Dépenses fixes -->
       <div class="card">
-        <h3><span class="dot" style="background:var(--red)"></span>Dépenses Fixes <span style="font-size:10px;color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0">&nbsp;— montant mensuel</span></h3>
+        <h3><span class="dot" style="background:var(--red)"></span>Factures & Fixes <span style="font-size:10px;color:var(--yellow);font-weight:500;text-transform:none;letter-spacing:0;background:rgba(255,209,102,0.1);padding:2px 6px;border-radius:4px">montant mensuel — 1x/mois</span></h3>
         <table>
           <thead><tr>
-            <th>Description</th><th>Catégorie</th><th style="text-align:right">Mensuel</th><th style="text-align:right;color:var(--blue)">Par paie (÷2)</th><th></th>
+            <th>Description</th><th>Catégorie</th><th style="text-align:right">Mensuel</th><th></th>
           </tr></thead>
           <tbody id="fixed-body"></tbody>
         </table>
-        <button class="add-row-btn" onclick="addRow('fixed')">+ Ajouter une dépense fixe</button>
+        <button class="add-row-btn" onclick="addRow('fixed')">+ Ajouter une facture</button>
       </div>
     </div>
 
     <div class="grid-2">
       <!-- Dépenses variables -->
       <div class="card">
-        <h3><span class="dot" style="background:var(--yellow)"></span>Dépenses Variables</h3>
+        <h3><span class="dot" style="background:var(--yellow)"></span>Dépenses Variables <span style="font-size:10px;color:var(--blue);font-weight:500;text-transform:none;letter-spacing:0;background:rgba(77,121,255,0.1);padding:2px 6px;border-radius:4px">par période de 2 semaines</span></h3>
         <table>
           <thead><tr>
-            <th>Description</th><th>Catégorie</th><th style="text-align:right">Budget</th><th style="text-align:right">Réel</th><th></th>
+            <th>Description</th><th>Catégorie</th><th style="text-align:right">Budget (2 sem)</th><th style="text-align:right">Réel (2 sem)</th><th></th>
           </tr></thead>
           <tbody id="variable-body"></tbody>
         </table>
@@ -858,22 +858,6 @@ function appendRow(id, data = {}) {
     td.appendChild(inp);
     tr.appendChild(td);
   });
-  // bi-weekly computed column for income & fixed
-  if (id === 'income' || id === 'fixed') {
-    const tdBw = document.createElement('td');
-    tdBw.className = 'calc';
-    tdBw.dataset.bw = '1';
-    tdBw.style.textAlign = 'right';
-    // compute initial value
-    const amtKey = id === 'income' ? 'amt' : 'amt';
-    tdBw.textContent = fmtBw(num(data.amt));
-    tr.appendChild(tdBw);
-    // update on input change
-    const amtInp = tr.querySelector('[data-col="amt"]');
-    if (amtInp) amtInp.addEventListener('input', () => {
-      tdBw.textContent = fmtBw(num(amtInp.value));
-    });
-  }
   // delete button
   const tdDel = document.createElement('td');
   tdDel.style.width = '28px';
@@ -1015,44 +999,52 @@ function renderPaieCards() {
   const dates = loadPaieDates();
   const today = new Date().toISOString().slice(0,10);
 
-  // gather data once
-  const incomeRows   = readTableRows('income');
-  const fixedRows    = readTableRows('fixed');
-  const variableRows = readTableRows('variable');
+  const incomeRows   = readTableRows('income');   // amt = montant par paie (bi-sem)
+  const fixedRows    = readTableRows('fixed');     // amt = montant mensuel
+  const variableRows = readTableRows('variable');  // budget/real = par 2 semaines
   const ethPerPaycheck = num(document.getElementById('eth-default-amount')?.value);
-  const ethRows      = readEthRows();
 
-  const totalIncome    = incomeRows.reduce((s,r) => s + num(r.amt), 0);
-  const totalFixed     = fixedRows.reduce((s,r) => s + num(r.amt), 0);
-  const totalVarBudget = variableRows.reduce((s,r) => s + num(r.budget), 0);
-  const totalVarReal   = variableRows.reduce((s,r) => s + num(r.real), 0);
-  const n = dates.length || 2;
-
-  const paieIncome  = totalIncome / n;
-  const paieFixed   = totalFixed / n;
-  const paieVarB    = totalVarBudget / n;
-  const paieVarR    = totalVarReal / n;
-  const libre       = paieIncome - paieFixed - paieVarR - ethPerPaycheck;
+  // Revenu par paie = somme directe des sources (déjà en bi-hebdo)
+  const paieIncome  = incomeRows.reduce((s,r) => s + num(r.amt), 0);
+  // Variables réelles par période de 2 semaines
+  const paieVarReal = variableRows.reduce((s,r) => s + num(r.real), 0);
+  const paieVarBudget = variableRows.reduce((s,r) => s + num(r.budget), 0);
+  // Factures mensuelles totales (affichées une seule fois sur paie 1)
+  const totalFixed  = fixedRows.reduce((s,r) => s + num(r.amt), 0);
 
   container.innerHTML = '';
 
   dates.forEach((date, i) => {
-    // status
     let status = '', statusCls = '', headerCls = '', cardCls = '';
-    if (date < today)       { status = '✓ Reçue';     statusCls = 'received'; headerCls = 'green'; cardCls = 'active'; }
-    else if (date === today){ status = '💰 Aujourd\'hui'; statusCls = 'received'; headerCls = 'green'; cardCls = 'active'; }
-    else                    { status = '⏳ À venir';   statusCls = 'upcoming'; headerCls = 'blue'; cardCls = 'upcoming'; }
+    if (date < today)        { status = '✓ Reçue';          statusCls = 'received'; headerCls = 'green'; cardCls = 'active'; }
+    else if (date === today) { status = '💰 Aujourd\'hui';  statusCls = 'received'; headerCls = 'green'; cardCls = 'active'; }
+    else                     { status = '⏳ À venir';        statusCls = 'upcoming'; headerCls = 'blue';  cardCls = 'upcoming'; }
 
-    // ETH prévu pour cette paie
-    const ethPlanned = readTableRows('eth-planned').find(r => r.date === date);
-    const ethAmt = ethPlanned ? num(ethPlanned.amount) : ethPerPaycheck;
-
-    // period label
-    const nextDate = dates[i+1];
+    const ethAmt = ethPerPaycheck;
+    const nextDate  = dates[i+1];
     const periodEnd = nextDate
       ? new Date(new Date(nextDate) - 86400000).toISOString().slice(0,10)
       : lastDayOfMonth(currentMonth.year, currentMonth.month);
-    const libreThisPaycheck = paieIncome - paieFixed - paieVarR - ethAmt;
+
+    // Paie 1 absorbe toutes les factures mensuelles, paie 2 = libre des factures
+    const billsThisPay = (i === 0) ? totalFixed : 0;
+    const libre = paieIncome - billsThisPay - paieVarReal - ethAmt;
+
+    // Ligne factures — seulement sur paie 1
+    const billsBlock = i === 0 ? `
+        <div class="paie-row" style="margin-top:4px">
+          <span class="pr-label">🧾 Factures du mois</span>
+          <span class="pr-val" style="color:var(--red)">-${fmtC(totalFixed)}</span>
+        </div>
+        <div class="paie-detail">
+          ${fixedRows.map(r => r.name && num(r.amt)>0
+            ? `<div class="paie-detail-item"><span>↳ ${r.name}</span><span>-${fmtC(num(r.amt))}</span></div>`
+            : '').join('')}
+        </div>` : `
+        <div class="paie-row" style="margin-top:4px">
+          <span class="pr-label" style="color:var(--muted);font-style:italic">🧾 Factures du mois</span>
+          <span class="pr-val" style="color:var(--muted)">payées sur paie 1</span>
+        </div>`;
 
     const card = document.createElement('div');
     card.className = `paie-card ${cardCls}`;
@@ -1063,35 +1055,35 @@ function renderPaieCards() {
         <span class="paie-status ${statusCls}">${status}</span>
       </div>
       <div class="paie-body">
-        <div style="font-size:10px;color:var(--muted);margin-bottom:10px">Période : ${formatDate(date)} → ${formatDate(periodEnd)}</div>
-        <div class="paie-row">
-          <span class="pr-label">💵 Revenu net de la paie</span>
-          <span class="pr-val" style="color:var(--green)">+${fmtC(paieIncome)}</span>
+        <div style="font-size:10px;color:var(--muted);margin-bottom:12px;letter-spacing:0.3px">
+          📆 Période : <strong style="color:var(--text)">${formatDate(date)}</strong> → <strong style="color:var(--text)">${formatDate(periodEnd)}</strong>
         </div>
         <div class="paie-row">
-          <span class="pr-label">🔒 Dépenses fixes allouées</span>
-          <span class="pr-val" style="color:var(--red)">-${fmtC(paieFixed)}</span>
+          <span class="pr-label">💵 Revenu de la paie</span>
+          <span class="pr-val" style="color:var(--green);font-size:16px">+${fmtC(paieIncome)}</span>
+        </div>
+        ${billsBlock}
+        <div class="paie-row" style="margin-top:4px">
+          <span class="pr-label">🛒 Dépenses variables (2 sem)</span>
+          <span class="pr-val" style="color:var(--yellow)">-${fmtC(paieVarReal)}</span>
         </div>
         <div class="paie-detail">
-          ${fixedRows.map(r => r.name && num(r.amt) > 0 ? `<div class="paie-detail-item"><span>↳ ${r.name}</span><span>-${fmtC(num(r.amt)/n)}</span></div>` : '').join('')}
+          ${variableRows.map(r => r.name && num(r.real)>0
+            ? `<div class="paie-detail-item"><span>↳ ${r.name}</span><span style="color:var(--yellow)">-${fmtC(num(r.real))}</span></div>`
+            : '').join('')}
         </div>
-        <div class="paie-row" style="margin-top:6px">
-          <span class="pr-label">📊 Dépenses variables (réel)</span>
-          <span class="pr-val" style="color:var(--yellow)">-${fmtC(paieVarR)}</span>
-        </div>
-        <div class="paie-row">
+        <div class="paie-row" style="margin-top:4px">
           <span class="pr-label">🟠 ETH Wealthsimple</span>
           <span class="pr-val" style="color:var(--eth)">-${fmtC(ethAmt)}</span>
         </div>
         <div class="paie-row total">
-          <span class="pr-label">🏦 Solde libre</span>
-          <span class="pr-val" style="color:${libreThisPaycheck >= 0 ? 'var(--green)' : 'var(--red)'}">${libreThisPaycheck >= 0 ? '+' : '-'}${fmtC(libreThisPaycheck)}</span>
+          <span class="pr-label">🏦 Disponible après tout</span>
+          <span class="pr-val" style="font-size:17px;color:${libre>=0?'var(--green)':'var(--red)'}">${libre>=0?'+':'-'}${fmtC(libre)}</span>
         </div>
       </div>`;
     container.appendChild(card);
   });
 
-  // Bouton ajouter une paie
   const addBtn = document.createElement('div');
   addBtn.style.cssText = 'display:flex;align-items:center;justify-content:center;';
   addBtn.innerHTML = `<button class="add-row-btn" style="height:100%;min-height:80px" onclick="addPaycheck()">+ Ajouter une paie</button>`;
@@ -1142,15 +1134,21 @@ function recalc() {
   const investRows   = readTableRows('investments');
   const ethRows      = readEthRows();
 
-  const totalIncome    = incomeRows.reduce((s,r) => s + num(r.amt), 0);
-  const totalFixed     = fixedRows.reduce((s,r) => s + num(r.amt), 0);
-  const totalVarBudget = variableRows.reduce((s,r) => s + num(r.budget), 0);
-  const totalVarReal   = variableRows.reduce((s,r) => s + num(r.real), 0);
+  // income.amt = montant par paie (bi-hebdo direct)
+  // fixed.amt  = montant mensuel
+  // variable.budget/real = par période 2 semaines
+  const nPaies         = loadPaieDates().length || 2;
+  const paieIncome     = incomeRows.reduce((s,r) => s + num(r.amt), 0); // par paie
+  const totalIncome    = paieIncome * nPaies;                             // mensuel = ×nPaies
+  const totalFixed     = fixedRows.reduce((s,r) => s + num(r.amt), 0);  // mensuel
+  const paieVarBudget  = variableRows.reduce((s,r) => s + num(r.budget), 0); // par 2 sem
+  const paieVarReal    = variableRows.reduce((s,r) => s + num(r.real), 0);   // par 2 sem
+  const totalVarBudget = paieVarBudget * nPaies;
+  const totalVarReal   = paieVarReal * nPaies;
 
   // ETH monthly equivalent (montant investi / mois courant)
   const monthKey = `${currentMonth.year}-${String(currentMonth.month+1).padStart(2,'0')}`;
   const ethMonthly = ethRows.filter(r => r.date && r.date.startsWith(monthKey)).reduce((s,r) => s + num(r.amount), 0);
-  // ETH bi-weekly default
   const ethPerPaycheck = num(document.getElementById('eth-default-amount')?.value);
 
   const totalExpenses  = totalFixed + totalVarReal;
@@ -1185,14 +1183,11 @@ function recalc() {
   kwEl.style.color = netWorth >= 0 ? 'var(--purple)' : 'var(--red)';
 
   // ── Bi-weekly header ──
-  const bwIncome = totalIncome / BW;
-  const bwFixed  = totalFixed / BW;
-  const bwVar    = totalVarReal / BW;
-  const bwEth    = ethPerPaycheck;
-  const bwFree   = bwIncome - bwFixed - bwVar - bwEth;
+  // paieIncome déjà en bi-hebdo direct; factures mensuelles sur paie 1 uniquement
+  // Pour le header on montre la paie 1 (la plus chargée)
   const fmtS = v => '$' + Math.abs(v).toLocaleString('fr-CA',{maximumFractionDigits:0});
-  set('header-paie',  fmtS(bwIncome));
-  set('header-dep',   fmtS(bwFixed + bwVar));
+  const bwFree = paieIncome - totalFixed - paieVarReal - ethPerPaycheck; // paie 1
+  set('header-dep',   fmtS(totalFixed + paieVarReal));
   const libreEl = document.getElementById('header-libre');
   if (libreEl) { libreEl.textContent = (bwFree >= 0 ? '' : '-') + fmtS(bwFree); libreEl.style.color = bwFree >= 0 ? 'var(--green)' : 'var(--red)'; }
 
@@ -1204,13 +1199,14 @@ function recalc() {
   if (diffEl) { diffEl.textContent = (diff >= 0 ? '+' : '-') + fmt(diff); diffEl.style.color = diff >= 0 ? 'var(--green)' : 'var(--red)'; }
   set('sum-saveable', fmt(net > 0 ? net : 0));
 
-  // ── Bi-weekly breakdown ──
-  set('bw-income', fmtS(bwIncome));
-  set('bw-fixed',  fmtS(bwFixed));
-  set('bw-var',    fmtS(bwVar));
-  set('bw-eth',    fmtS(bwEth));
+  // ── Résumé par paie (moyenne — paie 2 est plus légère car sans factures) ──
+  const bwFreeAvg = paieIncome - (totalFixed / nPaies) - paieVarReal - ethPerPaycheck;
+  set('bw-income', fmtS(paieIncome));
+  set('bw-fixed',  fmtS(totalFixed / nPaies));
+  set('bw-var',    fmtS(paieVarReal));
+  set('bw-eth',    fmtS(ethPerPaycheck));
   const bwFreeEl = document.getElementById('bw-free');
-  if (bwFreeEl) { bwFreeEl.textContent = (bwFree >= 0 ? '' : '-') + fmtS(bwFree); bwFreeEl.style.color = bwFree >= 0 ? 'var(--green)' : 'var(--red)'; }
+  if (bwFreeEl) { bwFreeEl.textContent = (bwFreeAvg >= 0 ? '' : '-') + fmtS(bwFreeAvg); bwFreeEl.style.color = bwFreeAvg >= 0 ? 'var(--green)' : 'var(--red)'; }
 
   // ── ETH KPIs ──
   set('eth-kpi-invested',   fmt(totalInvested));
@@ -1245,10 +1241,9 @@ function recalc() {
   const nextPaie = paieDates.find(d => d >= today2);
   const headerEl = document.getElementById('header-paie');
   if (headerEl) {
-    const bwAmt = totalIncome / BW;
     headerEl.textContent = nextPaie
-      ? fmtC(bwAmt) + ' · ' + formatDate(nextPaie)
-      : fmtC(bwAmt);
+      ? fmtC(paieIncome) + ' · ' + formatDate(nextPaie)
+      : fmtC(paieIncome);
   }
 
   // ── Charts ──
