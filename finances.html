@@ -163,6 +163,47 @@
   /* Tooltip */
   .tip { font-size: 11px; color: var(--muted); margin-top: 4px; }
 
+  /* ── Pay period cards ─────────────────────────────── */
+  .paie-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:20px; }
+  .paie-card {
+    background:var(--card); border:1px solid var(--border); border-radius:12px; overflow:hidden;
+  }
+  .paie-card.active { border-color: var(--green); box-shadow: 0 0 0 1px rgba(0,210,106,0.2); }
+  .paie-card.upcoming { border-color: var(--blue); box-shadow: 0 0 0 1px rgba(77,121,255,0.15); }
+  .paie-header {
+    padding: 14px 18px; display:flex; align-items:center; gap:12px;
+    border-bottom:1px solid var(--border);
+  }
+  .paie-header.green { background: rgba(0,210,106,0.08); }
+  .paie-header.blue  { background: rgba(77,121,255,0.08); }
+  .paie-num { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:1px; padding:3px 8px; border-radius:4px; }
+  .paie-num.green { background:rgba(0,210,106,0.15); color:var(--green); }
+  .paie-num.blue  { background:rgba(77,121,255,0.15); color:var(--blue); }
+  .paie-date-input {
+    background:transparent; border:1px solid var(--border); color:var(--text);
+    font-size:13px; font-weight:600; font-family:inherit; border-radius:6px;
+    padding:4px 8px; outline:none; cursor:pointer; flex:1;
+  }
+  .paie-date-input:focus { border-color:var(--blue); }
+  .paie-status { font-size:11px; font-weight:600; padding:3px 8px; border-radius:10px; white-space:nowrap; }
+  .paie-status.received  { background:rgba(0,210,106,0.15); color:var(--green); }
+  .paie-status.upcoming  { background:rgba(77,121,255,0.15); color:var(--blue); }
+  .paie-status.past      { background:rgba(148,163,184,0.1); color:var(--muted); }
+  .paie-body { padding:14px 18px; }
+  .paie-row {
+    display:flex; justify-content:space-between; align-items:center;
+    padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.04); font-size:13px;
+  }
+  .paie-row:last-child { border-bottom:none; }
+  .paie-row .pr-label { color:var(--muted); }
+  .paie-row .pr-val   { font-weight:600; }
+  .paie-row.total { margin-top:8px; padding-top:12px; border-top:2px solid var(--border); border-bottom:none; font-size:15px; }
+  .paie-row.total .pr-label { color:var(--text); font-weight:600; }
+  .paie-detail { margin-top:10px; }
+  .paie-detail-item { display:flex; justify-content:space-between; font-size:12px; color:var(--muted); padding:3px 0; }
+  .paie-detail-item span:last-child { color:var(--red); }
+  .period-label { font-size:10px; color:var(--muted); }
+
   select.editable {
     appearance: none; -webkit-appearance: none;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2394a3b8'/%3E%3C/svg%3E");
@@ -199,8 +240,7 @@
 <header>
   <h1>💰 Dashboard <span>Finances Perso</span></h1>
   <div class="biweekly-pill">
-    📅 Cycle bi-hebdomadaire &nbsp;<span class="sep">|</span>&nbsp;
-    Paie: <span id="header-paie" style="color:var(--green)">$0</span>
+    💰 Prochaine paie : <span id="header-paie" style="color:var(--green)">—</span>
     &nbsp;<span class="sep">|</span>&nbsp;
     Dép/paie: <span id="header-dep" style="color:var(--red)">$0</span>
     &nbsp;<span class="sep">|</span>&nbsp;
@@ -257,6 +297,12 @@
 
   <!-- ===================== TAB: MENSUEL ===================== -->
   <div id="tab-mensuel" class="tab-content active">
+
+    <!-- ── Cartes de paie ── -->
+    <div class="paie-grid" id="paie-cards-container">
+      <!-- générées par JS -->
+    </div>
+
     <div class="grid-2">
 
       <!-- Revenus -->
@@ -325,30 +371,15 @@
           <div id="sum-saveable" style="font-size:18px;font-weight:700;color:var(--green)">$0</div>
         </div>
       </div>
-      <!-- Bi-weekly breakdown -->
+      <!-- Résumé bi-hebdomadaire -->
       <div style="border-top:1px solid var(--border);padding-top:16px">
-        <div style="font-size:11px;font-weight:600;color:var(--blue);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:12px">Vue par paie (bi-hebdomadaire — 26 paies/an)</div>
+        <div style="font-size:11px;font-weight:600;color:var(--blue);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:12px">Moyenne par paie (bi-hebdomadaire — 26 paies/an)</div>
         <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:16px">
-          <div>
-            <div style="color:var(--muted);font-size:11px;margin-bottom:4px">Revenu / paie</div>
-            <div id="bw-income" style="font-size:17px;font-weight:700;color:var(--green)">$0</div>
-          </div>
-          <div>
-            <div style="color:var(--muted);font-size:11px;margin-bottom:4px">Fixes / paie</div>
-            <div id="bw-fixed" style="font-size:17px;font-weight:700;color:var(--red)">$0</div>
-          </div>
-          <div>
-            <div style="color:var(--muted);font-size:11px;margin-bottom:4px">Variables / paie</div>
-            <div id="bw-var" style="font-size:17px;font-weight:700;color:var(--yellow)">$0</div>
-          </div>
-          <div>
-            <div style="color:var(--muted);font-size:11px;margin-bottom:4px">ETH / paie</div>
-            <div id="bw-eth" style="font-size:17px;font-weight:700;color:var(--eth)">$0</div>
-          </div>
-          <div>
-            <div style="color:var(--muted);font-size:11px;margin-bottom:4px">Libre / paie</div>
-            <div id="bw-free" style="font-size:17px;font-weight:700">$0</div>
-          </div>
+          <div><div style="color:var(--muted);font-size:11px;margin-bottom:4px">Revenu / paie</div><div id="bw-income" style="font-size:17px;font-weight:700;color:var(--green)">$0</div></div>
+          <div><div style="color:var(--muted);font-size:11px;margin-bottom:4px">Fixes / paie</div><div id="bw-fixed" style="font-size:17px;font-weight:700;color:var(--red)">$0</div></div>
+          <div><div style="color:var(--muted);font-size:11px;margin-bottom:4px">Variables / paie</div><div id="bw-var" style="font-size:17px;font-weight:700;color:var(--yellow)">$0</div></div>
+          <div><div style="color:var(--muted);font-size:11px;margin-bottom:4px">ETH / paie</div><div id="bw-eth" style="font-size:17px;font-weight:700;color:var(--eth)">$0</div></div>
+          <div><div style="color:var(--muted);font-size:11px;margin-bottom:4px">Libre / paie</div><div id="bw-free" style="font-size:17px;font-weight:700">$0</div></div>
         </div>
       </div>
     </div>
@@ -957,6 +988,143 @@ function refreshEthCalcs() {
   document.querySelectorAll('#eth-dca-body tr').forEach(tr => updateEthRowCalcs(tr));
 }
 
+// ─── Pay schedule ─────────────────────────────────────────────────────────
+// Default: 2 paies par mois, dates modifiables
+function defaultPaieDates() {
+  const y = currentMonth.year;
+  const m = String(currentMonth.month + 1).padStart(2,'0');
+  return [`${y}-${m}-02`, `${y}-${m}-16`];
+}
+
+function loadPaieDates() {
+  try {
+    const d = localStorage.getItem(storageKey('paie-dates'));
+    return d ? JSON.parse(d) : defaultPaieDates();
+  } catch { return defaultPaieDates(); }
+}
+
+function savePaieDates() {
+  const dates = [];
+  document.querySelectorAll('.paie-date-input').forEach(el => dates.push(el.value));
+  localStorage.setItem(storageKey('paie-dates'), JSON.stringify(dates));
+}
+
+function renderPaieCards() {
+  const container = document.getElementById('paie-cards-container');
+  if (!container) return;
+  const dates = loadPaieDates();
+  const today = new Date().toISOString().slice(0,10);
+
+  // gather data once
+  const incomeRows   = readTableRows('income');
+  const fixedRows    = readTableRows('fixed');
+  const variableRows = readTableRows('variable');
+  const ethPerPaycheck = num(document.getElementById('eth-default-amount')?.value);
+  const ethRows      = readEthRows();
+
+  const totalIncome    = incomeRows.reduce((s,r) => s + num(r.amt), 0);
+  const totalFixed     = fixedRows.reduce((s,r) => s + num(r.amt), 0);
+  const totalVarBudget = variableRows.reduce((s,r) => s + num(r.budget), 0);
+  const totalVarReal   = variableRows.reduce((s,r) => s + num(r.real), 0);
+  const n = dates.length || 2;
+
+  const paieIncome  = totalIncome / n;
+  const paieFixed   = totalFixed / n;
+  const paieVarB    = totalVarBudget / n;
+  const paieVarR    = totalVarReal / n;
+  const libre       = paieIncome - paieFixed - paieVarR - ethPerPaycheck;
+
+  container.innerHTML = '';
+
+  dates.forEach((date, i) => {
+    // status
+    let status = '', statusCls = '', headerCls = '', cardCls = '';
+    if (date < today)       { status = '✓ Reçue';     statusCls = 'received'; headerCls = 'green'; cardCls = 'active'; }
+    else if (date === today){ status = '💰 Aujourd\'hui'; statusCls = 'received'; headerCls = 'green'; cardCls = 'active'; }
+    else                    { status = '⏳ À venir';   statusCls = 'upcoming'; headerCls = 'blue'; cardCls = 'upcoming'; }
+
+    // ETH prévu pour cette paie
+    const ethPlanned = readTableRows('eth-planned').find(r => r.date === date);
+    const ethAmt = ethPlanned ? num(ethPlanned.amount) : ethPerPaycheck;
+
+    // period label
+    const nextDate = dates[i+1];
+    const periodEnd = nextDate
+      ? new Date(new Date(nextDate) - 86400000).toISOString().slice(0,10)
+      : lastDayOfMonth(currentMonth.year, currentMonth.month);
+    const libreThisPaycheck = paieIncome - paieFixed - paieVarR - ethAmt;
+
+    const card = document.createElement('div');
+    card.className = `paie-card ${cardCls}`;
+    card.innerHTML = `
+      <div class="paie-header ${headerCls}">
+        <span class="paie-num ${headerCls}">Paie ${i+1}</span>
+        <input class="paie-date-input" type="date" value="${date}" onchange="onPaieChange(this, ${i})">
+        <span class="paie-status ${statusCls}">${status}</span>
+      </div>
+      <div class="paie-body">
+        <div style="font-size:10px;color:var(--muted);margin-bottom:10px">Période : ${formatDate(date)} → ${formatDate(periodEnd)}</div>
+        <div class="paie-row">
+          <span class="pr-label">💵 Revenu net de la paie</span>
+          <span class="pr-val" style="color:var(--green)">+${fmtC(paieIncome)}</span>
+        </div>
+        <div class="paie-row">
+          <span class="pr-label">🔒 Dépenses fixes allouées</span>
+          <span class="pr-val" style="color:var(--red)">-${fmtC(paieFixed)}</span>
+        </div>
+        <div class="paie-detail">
+          ${fixedRows.map(r => r.name && num(r.amt) > 0 ? `<div class="paie-detail-item"><span>↳ ${r.name}</span><span>-${fmtC(num(r.amt)/n)}</span></div>` : '').join('')}
+        </div>
+        <div class="paie-row" style="margin-top:6px">
+          <span class="pr-label">📊 Dépenses variables (réel)</span>
+          <span class="pr-val" style="color:var(--yellow)">-${fmtC(paieVarR)}</span>
+        </div>
+        <div class="paie-row">
+          <span class="pr-label">🟠 ETH Wealthsimple</span>
+          <span class="pr-val" style="color:var(--eth)">-${fmtC(ethAmt)}</span>
+        </div>
+        <div class="paie-row total">
+          <span class="pr-label">🏦 Solde libre</span>
+          <span class="pr-val" style="color:${libreThisPaycheck >= 0 ? 'var(--green)' : 'var(--red)'}">${libreThisPaycheck >= 0 ? '+' : '-'}${fmtC(libreThisPaycheck)}</span>
+        </div>
+      </div>`;
+    container.appendChild(card);
+  });
+
+  // Bouton ajouter une paie
+  const addBtn = document.createElement('div');
+  addBtn.style.cssText = 'display:flex;align-items:center;justify-content:center;';
+  addBtn.innerHTML = `<button class="add-row-btn" style="height:100%;min-height:80px" onclick="addPaycheck()">+ Ajouter une paie</button>`;
+  container.appendChild(addBtn);
+}
+
+function onPaieChange(input, idx) {
+  savePaieDates();
+  recalc();
+}
+
+function addPaycheck() {
+  const dates = loadPaieDates();
+  const y = currentMonth.year, m = String(currentMonth.month+1).padStart(2,'0');
+  dates.push(`${y}-${m}-01`);
+  localStorage.setItem(storageKey('paie-dates'), JSON.stringify(dates));
+  recalc();
+}
+
+function lastDayOfMonth(y, m) {
+  return new Date(y, m+1, 0).toISOString().slice(0,10);
+}
+
+function formatDate(d) {
+  if (!d) return '—';
+  const [y,mo,day] = d.split('-');
+  return `${parseInt(day)} ${MONTHS_FR[parseInt(mo)-1].slice(0,3)} ${y}`;
+}
+
+function fmtC(v) {
+  return '$' + Math.abs(v).toLocaleString('fr-CA',{minimumFractionDigits:0,maximumFractionDigits:0});
+}
+
 // ─── Calculations ──────────────────────────────────────────────────────────
 function num(v) { return parseFloat(v) || 0; }
 function fmt(v) { return '$' + Math.abs(v).toLocaleString('fr-CA', {minimumFractionDigits:0,maximumFractionDigits:0}); }
@@ -1067,6 +1235,21 @@ function recalc() {
   set('total-liabilities',  fmt(totalLiab));
   const pnEl = document.getElementById('patrimoine-net');
   if (pnEl) { pnEl.textContent = fmt(netWorth); pnEl.style.color = netWorth >= 0 ? 'var(--green)' : 'var(--red)'; }
+
+  // ── Pay period cards ──
+  renderPaieCards();
+
+  // ── Header: next paycheck ──
+  const today2 = new Date().toISOString().slice(0,10);
+  const paieDates = loadPaieDates();
+  const nextPaie = paieDates.find(d => d >= today2);
+  const headerEl = document.getElementById('header-paie');
+  if (headerEl) {
+    const bwAmt = totalIncome / BW;
+    headerEl.textContent = nextPaie
+      ? fmtC(bwAmt) + ' · ' + formatDate(nextPaie)
+      : fmtC(bwAmt);
+  }
 
   // ── Charts ──
   renderDonut(fixedRows, variableRows);
