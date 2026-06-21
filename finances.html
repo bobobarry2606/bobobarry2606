@@ -1396,7 +1396,7 @@ function renderPaieCards() {
   const today   = new Date().toISOString().slice(0,10);
   const fixedRows = readTableRows('fixed');
   const varRows   = readTableRows('variable');
-  const ethAmt    = num(document.getElementById('eth-default-amount')?.value);
+  const ethAmt    = 0; // ETF déjà comptés dans chargesTotal via getChargesForPeriod
   const y = currentMonth.year, m = currentMonth.month;
 
   container.innerHTML = '';
@@ -1479,13 +1479,10 @@ function renderPaieCards() {
           <span class="pr-label">🛒 Variables (2 sem)</span>
           <span class="pr-val" style="color:var(--yellow)">-${fmtC(paieVarR)}</span>
         </div>
-        <div class="paie-row">
-          <span class="pr-label">🟠 Wealthsimple (HLAL+SPUS)</span>
-          <span class="pr-val" style="color:var(--eth)">-${fmtC(ethAmt)}</span>
-        </div>
+
         <div class="paie-row total">
           <span class="pr-label">🏦 Disponible</span>
-          <span class="pr-val" style="font-size:18px;color:${libre>=0?'var(--green)':'var(--red)'}">${libre>=0?'+':'-'}$${Math.abs(libre).toFixed(2)}</span>
+          <span class="pr-val" id="libre-${date}" style="font-size:18px;color:${libre>=0?'var(--green)':'var(--red)'}">${libre>=0?'+':'-'}$${Math.abs(libre).toFixed(2)}</span>
         </div>
       </div>`;
     container.appendChild(card);
@@ -1495,6 +1492,12 @@ function renderPaieCards() {
   addBtn.style.cssText = 'display:flex;align-items:center;justify-content:center;';
   addBtn.innerHTML = `<button class="add-row-btn" style="height:100%;min-height:80px" onclick="addPaycheck()">+ Ajouter une paie</button>`;
   container.appendChild(addBtn);
+}
+
+function defaultPaieDates() {
+  const y = currentMonth.year;
+  const m = String(currentMonth.month + 1).padStart(2,'0');
+  return [`${y}-${m}-02`, `${y}-${m}-16`];
 }
 
 function loadPaieDates() {
@@ -1523,6 +1526,28 @@ function savePaieAmount(date, val) {
 }
 
 
+function updatePaieLibres(fixedRows, varRows) {
+  // Update only the "Disponible" display without rebuilding cards
+  const dates = loadPaieDates();
+  const amounts = loadPaieAmounts();
+  const y = currentMonth.year, m = currentMonth.month;
+  dates.forEach((date, i) => {
+    const el = document.getElementById('libre-' + date);
+    if (!el) return;
+    const nextDate  = dates[i+1];
+    const periodEnd = nextDate
+      ? new Date(new Date(nextDate) - 86400000).toISOString().slice(0,10)
+      : lastDayOfMonth(y, m);
+    const charges     = getChargesForPeriod(date, periodEnd, fixedRows, y, m);
+    const chargesTotal = charges.reduce((s,c) => s + c.amt, 0);
+    const paieAmt     = num(amounts[date] || 0);
+    const paieVarR    = varRows.reduce((s,r) => s + num(r.real), 0);
+    const libre       = paieAmt - chargesTotal - paieVarR;
+    el.textContent    = (libre >= 0 ? '+' : '-') + '$' + Math.abs(libre).toFixed(2);
+    el.style.color    = libre >= 0 ? 'var(--green)' : 'var(--red)';
+  });
+}
+
 function onPaieChange(input, idx) {
   savePaieDates();
   recalc();
@@ -1533,6 +1558,7 @@ function addPaycheck() {
   const y = currentMonth.year, m = String(currentMonth.month+1).padStart(2,'0');
   dates.push(`${y}-${m}-01`);
   localStorage.setItem(storageKey('paie-dates'), JSON.stringify(dates));
+  renderPaieCards();
   recalc();
 }
 
@@ -1619,7 +1645,7 @@ function recalc() {
     const parts = paieDates.map((d,i) => `P${i+1}: ${fmt(num(paieAmounts[d]||0))}`).join(' · ');
     kpiSubEl.textContent = parts || 'Aucune paie saisie';
   }
-  set('kpi-expenses', fmt(totalExpenses + ethMonthly));
+  set('kpi-expenses', fmt(totalExpenses + wsMonthly));
   const netEl = document.getElementById('kpi-net');
   netEl.textContent = (net >= 0 ? '+' : '-') + fmt(net);
   netEl.style.color = net >= 0 ? 'var(--green)' : 'var(--red)';
@@ -1681,8 +1707,8 @@ function recalc() {
   // ── Credit cards ──
   updateCreditCards(fixedRows);
 
-  // ── Pay period cards ──
-  renderPaieCards();
+  // ── Pay period cards: update Disponible in-place (avoid DOM rebuild on input) ──
+  updatePaieLibres(fixedRows, variableRows);
 
   // ── Header: next paycheck ──
   const headerEl = document.getElementById('header-paie');
@@ -1701,7 +1727,7 @@ function recalc() {
   renderProjection(net);
   renderRetire();
   renderSavingsGoalBars();
-  renderEthChart(ethRows, priceNow);
+  // renderEthChart removed (ETH replaced by ETF tracker)
   refreshEthCalcs();
 }
 
@@ -1954,6 +1980,7 @@ function init() {
     }
   });
 
+  renderPaieCards();
   recalc();
 }
 
