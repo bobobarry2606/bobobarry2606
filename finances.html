@@ -460,7 +460,11 @@
           <div id="sum-var-diff" style="font-size:18px;font-weight:700">$0</div>
         </div>
         <div>
-          <div style="color:var(--muted);font-size:12px;margin-bottom:4px">Montant disponible à épargner</div>
+          <div style="color:var(--muted);font-size:12px;margin-bottom:4px">💰 Épargne versée (mois)</div>
+          <div id="sum-savings-total" style="font-size:18px;font-weight:700;color:var(--blue)">$0</div>
+        </div>
+        <div>
+          <div style="color:var(--muted);font-size:12px;margin-bottom:4px">Reste après tout</div>
           <div id="sum-saveable" style="font-size:18px;font-weight:700;color:var(--green)">$0</div>
         </div>
       </div>
@@ -1404,11 +1408,11 @@ function renderPaieCards() {
   if (!container) return;
 
   const dates   = loadPaieDates();
-  const amounts = loadPaieAmounts();
-  const today   = new Date().toISOString().slice(0,10);
+  const amounts  = loadPaieAmounts();
+  const savings  = loadPaieSavings();
+  const today    = new Date().toISOString().slice(0,10);
   const fixedRows = readTableRows('fixed');
   const varRows   = readTableRows('variable');
-  const ethAmt    = 0; // ETF déjà comptés dans chargesTotal via getChargesForPeriod
   const y = currentMonth.year, m = currentMonth.month;
 
   container.innerHTML = '';
@@ -1424,8 +1428,9 @@ function renderPaieCards() {
     const chargesTotal = charges.reduce((s,c) => s + c.amt, 0);
 
     const paieAmt    = num(amounts[date] || 0);
+    const paieSaving = num(savings[date] || 0);
     const paieVarR   = varRows.reduce((s,r) => s + num(r.real), 0);
-    const libre      = paieAmt - chargesTotal - paieVarR - ethAmt;
+    const libre      = paieAmt - chargesTotal - paieVarR - paieSaving;
 
     let statusCls = '', headerCls = '', cardCls = '', statusLabel = '';
     if      (date < today)  { statusLabel = '✓ Reçue';       statusCls = 'received'; headerCls = 'green'; cardCls = 'active'; }
@@ -1475,6 +1480,19 @@ function renderPaieCards() {
               style="background:transparent;border:none;outline:none;color:var(--green);font-size:24px;font-weight:700;font-family:inherit;width:100%;border-bottom:2px solid rgba(0,210,106,0.3)"
               oninput="savePaieAmount(this.dataset.date, this.value)">
           </div>
+        </div>
+
+        <!-- Épargne ce versement -->
+        <div style="background:rgba(77,121,255,0.05);border:1px solid rgba(77,121,255,0.2);border-radius:8px;padding:10px 14px;margin-bottom:12px">
+          <div style="font-size:10px;color:var(--blue);font-weight:700;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:6px">🏦 Virement épargne</div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="color:var(--blue);font-size:18px;font-weight:700">$</span>
+            <input type="number" class="paie-amount-input" placeholder="Ex: 250"
+              value="${savings[date] || ''}" data-date="${date}"
+              style="background:transparent;border:none;outline:none;color:var(--blue);font-size:20px;font-weight:700;font-family:inherit;width:100%;border-bottom:2px solid rgba(77,121,255,0.3)"
+              oninput="savePaieSavings(this.dataset.date, this.value)">
+          </div>
+          <div style="font-size:10px;color:var(--muted);margin-top:4px">Montant mis de côté ce versement</div>
         </div>
 
         <!-- Charges automatiques -->
@@ -1537,6 +1555,17 @@ function savePaieAmount(date, val) {
   recalc();
 }
 
+function loadPaieSavings() {
+  try { return JSON.parse(localStorage.getItem(storageKey('paie-savings')) || '{}'); }
+  catch { return {}; }
+}
+function savePaieSavings(date, val) {
+  const all = loadPaieSavings();
+  all[date] = val;
+  localStorage.setItem(storageKey('paie-savings'), JSON.stringify(all));
+  recalc();
+}
+
 
 function updatePaieLibres(fixedRows, varRows) {
   // Update only the "Disponible" display without rebuilding cards
@@ -1553,8 +1582,9 @@ function updatePaieLibres(fixedRows, varRows) {
     const charges     = getChargesForPeriod(date, periodEnd, fixedRows, y, m);
     const chargesTotal = charges.reduce((s,c) => s + c.amt, 0);
     const paieAmt     = num(amounts[date] || 0);
+    const paieSavAmt  = num(loadPaieSavings()[date] || 0);
     const paieVarR    = varRows.reduce((s,r) => s + num(r.real), 0);
-    const libre       = paieAmt - chargesTotal - paieVarR;
+    const libre       = paieAmt - chargesTotal - paieVarR - paieSavAmt;
     el.textContent    = (libre >= 0 ? '+' : '-') + '$' + Math.abs(libre).toFixed(2);
     el.style.color    = libre >= 0 ? 'var(--green)' : 'var(--red)';
   });
@@ -1628,9 +1658,15 @@ function recalc() {
   const ethPerPaycheck = wsPerPaycheck; // alias utilisé ailleurs
   const wsMonthly      = wsPerPaycheck * (paieDates.length || 2);
 
+  // Épargne volontaire saisie sur les cartes de paie
+  const paieSavingsAll = loadPaieSavings();
+  const totalSavings   = paieDates.reduce((s,d) => s + num(paieSavingsAll[d] || 0), 0);
+
   const totalExpenses  = totalFixed + totalVarReal;
-  const net            = totalIncomeAll - totalExpenses - wsMonthly;
-  const saveRate       = totalIncomeAll > 0 ? ((totalIncomeAll - totalExpenses) / totalIncomeAll * 100) : 0;
+  // net = ce qui reste après TOUTES les sorties (charges + WS + épargne)
+  const net            = totalIncomeAll - totalExpenses - wsMonthly - totalSavings;
+  // Taux d'épargne réel = (WS + épargne volontaire) / revenu
+  const saveRate       = totalIncomeAll > 0 ? ((wsMonthly + totalSavings) / totalIncomeAll * 100) : 0;
 
   // Wealthsimple ETF totals
   const hlalPrice    = num(document.getElementById('hlal-price-now')?.value);
@@ -1657,7 +1693,7 @@ function recalc() {
     const parts = paieDates.map((d,i) => `P${i+1}: ${fmt(num(paieAmounts[d]||0))}`).join(' · ');
     kpiSubEl.textContent = parts || 'Aucune paie saisie';
   }
-  set('kpi-expenses', fmt(totalExpenses + wsMonthly));
+  set('kpi-expenses', fmt(totalExpenses + wsMonthly + totalSavings));
   const netEl = document.getElementById('kpi-net');
   netEl.textContent = (net >= 0 ? '+' : '-') + fmt(net);
   netEl.style.color = net >= 0 ? 'var(--green)' : 'var(--red)';
@@ -1672,8 +1708,19 @@ function recalc() {
   const today3 = new Date().toISOString().slice(0,10);
   const nextD  = paieDates.find(d => d >= today3);
   const nextAmt = nextD ? num(paieAmounts[nextD] || 0) : 0;
-  const bwFree  = nextAmt - (nextD === paieDates[0] ? totalFixed : 0) - paieVarReal - ethPerPaycheck;
-  set('header-dep', fmtS(totalFixed + paieVarReal));
+  // Calcul libre paie: utiliser getChargesForPeriod (même méthode que les cartes)
+  let bwFree = 0;
+  if (nextD) {
+    const nextIdx = paieDates.indexOf(nextD);
+    const nEnd = paieDates[nextIdx+1]
+      ? new Date(new Date(paieDates[nextIdx+1]) - 86400000).toISOString().slice(0,10)
+      : lastDayOfMonth(currentMonth.year, currentMonth.month);
+    const nCharges = getChargesForPeriod(nextD, nEnd, fixedRows, currentMonth.year, currentMonth.month);
+    const nChargesTotal = nCharges.reduce((s,c) => s + c.amt, 0);
+    const nSavings = num(paieSavingsAll[nextD] || 0);
+    bwFree = nextAmt - nChargesTotal - paieVarReal - nSavings;
+    set('header-dep', fmtS(nChargesTotal + paieVarReal + nSavings));
+  }
   const libreEl = document.getElementById('header-libre');
   if (libreEl) { libreEl.textContent = (bwFree >= 0 ? '' : '-') + fmtS(Math.abs(bwFree)); libreEl.style.color = bwFree >= 0 ? 'var(--green)' : 'var(--red)'; }
 
@@ -1683,11 +1730,16 @@ function recalc() {
   const diff = totalVarBudget - totalVarReal;
   const diffEl = document.getElementById('sum-var-diff');
   if (diffEl) { diffEl.textContent = (diff >= 0 ? '+' : '-') + fmt(diff); diffEl.style.color = diff >= 0 ? 'var(--green)' : 'var(--red)'; }
+  // "Montant pouvant être épargné" = ce qui reste après tout (net réel)
   set('sum-saveable', fmt(net > 0 ? net : 0));
+  // Afficher aussi le total épargné ce mois
+  const sumSavEl = document.getElementById('sum-savings-total');
+  if (sumSavEl) sumSavEl.textContent = fmt(totalSavings);
 
   // ── Résumé par paie ──
   const avgPaie   = paieDates.length > 0 ? totalIncome / paieDates.length : 0;
-  const bwFreeAvg = avgPaie - (totalFixed / nPaies) - paieVarReal - ethPerPaycheck;
+  const avgSavings = nPaies > 0 ? totalSavings / nPaies : 0;
+  const bwFreeAvg = avgPaie - (totalFixed / nPaies) - paieVarReal - ethPerPaycheck - avgSavings;
   set('bw-income', fmtS(avgPaie));
   set('bw-fixed',  fmtS(totalFixed / nPaies));
   set('bw-var',    fmtS(paieVarReal));
