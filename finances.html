@@ -1332,10 +1332,6 @@ function renderPaieCards() {
   addBtn.innerHTML = `<button class="add-row-btn" style="height:100%;min-height:80px" onclick="addPaycheck()">+ Ajouter une paie</button>`;
   container.appendChild(addBtn);
 }
-  const y = currentMonth.year;
-  const m = String(currentMonth.month + 1).padStart(2,'0');
-  return [`${y}-${m}-02`, `${y}-${m}-16`];
-}
 
 function loadPaieDates() {
   try {
@@ -1362,118 +1358,6 @@ function savePaieAmount(date, val) {
   recalc();
 }
 
-function renderPaieCards() {
-  const container = document.getElementById('paie-cards-container');
-  if (!container) return;
-  const dates      = loadPaieDates();
-  const amounts    = loadPaieAmounts();
-  const today      = new Date().toISOString().slice(0,10);
-  const fixedRows  = readTableRows('fixed');
-  const varRows    = readTableRows('variable');
-  const ethAmt     = num(document.getElementById('eth-default-amount')?.value);
-  const totalFixed = fixedRows.reduce((s,r) => s + num(r.amt), 0);
-
-  container.innerHTML = '';
-
-  dates.forEach((date, i) => {
-    let statusCls = '', headerCls = '', cardCls = '';
-    if      (date < today)  { statusCls = 'received'; headerCls = 'green'; cardCls = 'active'; }
-    else if (date === today){ statusCls = 'received'; headerCls = 'green'; cardCls = 'active'; }
-    else                    { statusCls = 'upcoming'; headerCls = 'blue';  cardCls = 'upcoming'; }
-
-    const paieAmt   = num(amounts[date] || 0);
-    const nextDate  = dates[i+1];
-    const periodEnd = nextDate
-      ? new Date(new Date(nextDate) - 86400000).toISOString().slice(0,10)
-      : lastDayOfMonth(currentMonth.year, currentMonth.month);
-
-    // Variables pour cette période (réel)
-    const paieVarReal   = varRows.reduce((s,r) => s + num(r.real), 0);
-    const paieVarBudget = varRows.reduce((s,r) => s + num(r.budget), 0);
-
-    // Factures mensuelles déduites sur paie 1 seulement
-    const billsThisPay = (i === 0) ? totalFixed : 0;
-    const libre = paieAmt - billsThisPay - paieVarReal - ethAmt;
-
-    const statusLabel = date < today
-      ? '✓ Reçue'
-      : date === today
-        ? '💰 Aujourd\'hui'
-        : '⏳ À venir';
-
-    const billsBlock = i === 0
-      ? `<div class="paie-row">
-           <span class="pr-label">🧾 Factures du mois</span>
-           <span class="pr-val" style="color:var(--red)">-${fmtC(totalFixed)}</span>
-         </div>
-         <div class="paie-detail">
-           ${fixedRows.filter(r=>r.name&&num(r.amt)>0).map(r=>
-             `<div class="paie-detail-item"><span>↳ ${r.name}</span><span>-${fmtC(num(r.amt))}</span></div>`
-           ).join('')}
-         </div>`
-      : `<div class="paie-row">
-           <span class="pr-label" style="color:var(--muted);font-style:italic">🧾 Factures du mois</span>
-           <span class="pr-val" style="color:var(--muted)">payées sur paie 1</span>
-         </div>`;
-
-    const card = document.createElement('div');
-    card.className = `paie-card ${cardCls}`;
-    card.innerHTML = `
-      <div class="paie-header ${headerCls}">
-        <span class="paie-num ${headerCls}">Paie ${i+1}</span>
-        <input class="paie-date-input" type="date" value="${date}" onchange="onPaieChange(this, ${i})">
-        <span class="paie-status ${statusCls}">${statusLabel}</span>
-      </div>
-      <div class="paie-body">
-        <div style="font-size:10px;color:var(--muted);margin-bottom:14px">
-          📆 Période : <strong style="color:var(--text)">${formatDate(date)}</strong> → <strong style="color:var(--text)">${formatDate(periodEnd)}</strong>
-        </div>
-
-        <!-- Montant de paie éditable -->
-        <div style="background:rgba(0,210,106,0.06);border:1px solid rgba(0,210,106,0.2);border-radius:8px;padding:12px 14px;margin-bottom:14px">
-          <div style="font-size:10px;color:var(--green);font-weight:700;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:6px">💵 Montant de la paie</div>
-          <div style="display:flex;align-items:center;gap:8px">
-            <span style="color:var(--green);font-size:20px;font-weight:700">$</span>
-            <input
-              type="number"
-              class="paie-amount-input"
-              placeholder="Ex: 1 842.50"
-              value="${amounts[date] || ''}"
-              data-date="${date}"
-              style="background:transparent;border:none;outline:none;color:var(--green);font-size:24px;font-weight:700;font-family:inherit;width:100%;border-bottom:2px solid rgba(0,210,106,0.3)"
-              oninput="savePaieAmount(this.dataset.date, this.value)"
-            >
-          </div>
-          <div style="font-size:10px;color:var(--muted);margin-top:6px">Entrer le montant exact reçu le ${formatDate(date)}</div>
-        </div>
-
-        ${billsBlock}
-        <div class="paie-row">
-          <span class="pr-label">🛒 Dépenses variables (2 sem)</span>
-          <span class="pr-val" style="color:var(--yellow)">-${fmtC(paieVarReal)}</span>
-        </div>
-        <div class="paie-detail">
-          ${varRows.filter(r=>r.name&&num(r.real)>0).map(r=>
-            `<div class="paie-detail-item"><span>↳ ${r.name}</span><span style="color:var(--yellow)">-${fmtC(num(r.real))}</span></div>`
-          ).join('')}
-        </div>
-        <div class="paie-row">
-          <span class="pr-label">🟠 ETH Wealthsimple</span>
-          <span class="pr-val" style="color:var(--eth)">-${fmtC(ethAmt)}</span>
-        </div>
-        <div class="paie-row total">
-          <span class="pr-label">🏦 Disponible</span>
-          <span class="pr-val" style="font-size:18px;color:${libre>=0?'var(--green)':'var(--red)'}">${libre>=0?'+':'-'}${fmtC(Math.abs(libre))}</span>
-        </div>
-      </div>`;
-    container.appendChild(card);
-  });
-
-  const addBtn = document.createElement('div');
-  addBtn.style.cssText = 'display:flex;align-items:center;justify-content:center;';
-  addBtn.innerHTML = `<button class="add-row-btn" style="height:100%;min-height:80px" onclick="addPaycheck()">+ Ajouter une paie</button>`;
-  container.appendChild(addBtn);
-}
 
 function onPaieChange(input, idx) {
   savePaieDates();
