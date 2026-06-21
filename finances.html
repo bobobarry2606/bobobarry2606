@@ -876,7 +876,7 @@ const TABLE_CONFIGS = {
     cols: [
       { key:'name',    label:'Projet', ph:'Ex: Voyage', cls:'' },
       { key:'target',  label:'Cible ($)', ph:'0', cls:'amount', type:'number' },
-      { key:'saved',   label:'Épargné ($)', ph:'0', cls:'amount expense', type:'number' },
+      { key:'saved',   label:'Épargné ($)', ph:'Auto', cls:'amount expense', type:'number', readonly:true },
       { key:'date',    label:'Échéance', ph:'2027-06-01', cls:'category', inputType:'date' }
     ]
   },
@@ -1068,6 +1068,11 @@ function appendRow(id, data = {}) {
     inp.dataset.col = col.key;
     if (col.type === 'number') inp.type = 'number';
     if (col.inputType === 'date') inp.type = 'date';
+    if (col.readonly) {
+      inp.readOnly = true;
+      inp.style.cssText += ';background:rgba(255,255,255,0.03);color:var(--muted);cursor:default';
+      inp.title = 'Calculé automatiquement depuis vos virements épargne';
+    }
     inp.addEventListener('input', () => { saveAll(); });
     td.appendChild(inp);
     tr.appendChild(td);
@@ -1556,13 +1561,13 @@ function savePaieAmount(date, val) {
 }
 
 function loadPaieSavings() {
-  try { return JSON.parse(localStorage.getItem(storageKey('paie-savings')) || '{}'); }
+  try { return JSON.parse(localStorage.getItem(globalKey('paie-savings')) || '{}'); }
   catch { return {}; }
 }
 function savePaieSavings(date, val) {
   const all = loadPaieSavings();
   all[date] = val;
-  localStorage.setItem(storageKey('paie-savings'), JSON.stringify(all));
+  localStorage.setItem(globalKey('paie-savings'), JSON.stringify(all));
   recalc();
 }
 
@@ -1934,12 +1939,28 @@ const PHASE_MAP = [
 
 function renderSavingsGoalBars() {
   const rows = readTableRows('savings-goals');
+
+  // Compute total savings accumulated across all months (global)
+  const allSavings = loadPaieSavings();
+  const totalAccumulated = Object.values(allSavings).reduce((s, v) => s + num(v), 0);
+
+  // Distribute in priority order: fill goal 0 first, then 1, then 2
+  const targets = rows.map((r, i) => num(r.target) || PHASE_MAP[i]?.target || 0);
+  const distributed = [0, 0, 0];
+  let remaining = totalAccumulated;
+  for (let i = 0; i < 3; i++) {
+    const fill = Math.min(remaining, targets[i] || 0);
+    distributed[i] = fill;
+    remaining -= fill;
+    if (remaining <= 0) break;
+  }
+
   const wrap = document.getElementById('savings-goals-bars');
   if (wrap) {
     wrap.innerHTML = '';
-    rows.forEach(r => {
-      const target = num(r.target);
-      const saved  = num(r.saved);
+    rows.forEach((r, i) => {
+      const target = targets[i];
+      const saved  = distributed[i];
       const pct    = target > 0 ? Math.min(100, saved/target*100) : 0;
       const color  = pct >= 100 ? 'var(--green)' : pct >= 50 ? 'var(--blue)' : 'var(--yellow)';
       wrap.innerHTML += `
@@ -1953,17 +1974,26 @@ function renderSavingsGoalBars() {
     });
   }
 
-  // Update the 3 phase cards on Court Terme tab
+  // Update the 3 phase cards on Court Terme tab + savings-goals table inputs
+  const tbodies = document.querySelectorAll('#savings-goals-body');
   rows.forEach((r, i) => {
     const phase = PHASE_MAP[i];
     if (!phase) return;
-    const target = num(r.target) || phase.target;
-    const saved  = num(r.saved);
+    const target = targets[i];
+    const saved  = distributed[i];
     const pct    = target > 0 ? Math.min(100, saved/target*100) : 0;
     const bar    = document.getElementById('prog-' + phase.key);
     const lbl    = document.getElementById('prog-' + phase.key + '-label');
     if (bar) bar.style.width = pct + '%';
     if (lbl) lbl.textContent = '$' + Math.round(saved).toLocaleString('fr-CA') + ' / $' + Math.round(target).toLocaleString('fr-CA') + ' — ' + pct.toFixed(0) + '%';
+
+    // Update the read-only "saved" input in both savings-goals table instances
+    tbodies.forEach(tbody => {
+      const row = tbody.querySelectorAll('tr')[i];
+      if (!row) return;
+      const savedInp = row.querySelector('input[data-col="saved"]');
+      if (savedInp) savedInp.value = saved.toFixed(2);
+    });
   });
 }
 
