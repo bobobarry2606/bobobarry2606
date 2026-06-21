@@ -381,6 +381,12 @@
           <span>0%</span><span style="color:var(--yellow);font-weight:600">30% ← seuil score</span><span>100%</span>
         </div>
         <div id="visa-status-msg" style="margin-top:12px;font-size:12px;padding:8px 12px;border-radius:6px;display:none"></div>
+
+        <!-- Abonnements chargés ce mois -->
+        <div id="visa-charges-detail" style="margin-top:14px"></div>
+
+        <!-- Remboursement à la paie -->
+        <div id="visa-repay-section" style="margin-top:14px"></div>
       </div>
 
       <!-- Mastercard Desjardins -->
@@ -420,6 +426,12 @@
           <span>0%</span><span style="color:var(--yellow);font-weight:600">30% ← seuil score</span><span>100%</span>
         </div>
         <div id="mc-status-msg" style="margin-top:12px;font-size:12px;padding:8px 12px;border-radius:6px;display:none"></div>
+
+        <!-- Abonnements chargés ce mois -->
+        <div id="mc-charges-detail" style="margin-top:14px"></div>
+
+        <!-- Remboursement à la paie -->
+        <div id="mc-repay-section" style="margin-top:14px"></div>
       </div>
     </div>
 
@@ -1105,29 +1117,58 @@ function addRow(id) { appendRow(id, {}); saveAll(); }
 // ─── Credit card alert system ─────────────────────────────────────────────
 function updateCreditCards(fixedRows) {
   const CARDS = [
-    { prefix:'visa', name:'Visa RBC',           limit:2500, keyword:'visa rbc' },
-    { prefix:'mc',   name:'Mastercard Desj.',   limit:1500, keyword:'mastercard' },
+    { prefix:'visa', name:'Visa RBC',         limit:2500, keyword:'visa' },
+    { prefix:'mc',   name:'Mastercard Desj.', limit:1500, keyword:'mastercard' },
   ];
+  const today    = new Date().toISOString().slice(0,10);
+  const y        = currentMonth.year;
+  const m        = currentMonth.month;
+  const paieDates = loadPaieDates();
+  const repaid    = loadCcRepaid();
 
   CARDS.forEach(({ prefix, limit, keyword }) => {
     const threshold  = limit * 0.30;
-    const autoCharge = fixedRows
-      .filter(r => (r.card || '').toLowerCase().includes(keyword.split(' ')[0]))
-      .reduce((s,r) => s + num(r.amt), 0);
 
-    const balInput  = document.getElementById(`${prefix}-balance`);
-    const balance   = num(balInput?.value || 0);
-    const utilPct   = limit > 0 ? (balance / limit * 100) : 0;
+    // All fixed charges for this card this month
+    const cardCharges = fixedRows
+      .filter(r => (r.card || '').toLowerCase().includes(keyword) && num(r.amt) > 0)
+      .map(r => {
+        const dayStr = (r.day || '').trim().toLowerCase();
+        let date = null;
+        if (dayStr.includes('bi-hebdo')) {
+          // Nautilus: two dates per month — return first occurrence in month
+          const base = new Date('2026-06-09');
+          for (let n = 0; n < 100; n++) {
+            const d = new Date(base.getTime() + n * 14 * 86400000);
+            const ds = d.toISOString().slice(0,10);
+            const mStart = `${y}-${String(m+1).padStart(2,'0')}-01`;
+            const mEnd   = lastDayOfMonth(y, m);
+            if (ds > mEnd) break;
+            if (ds >= mStart) { date = ds; break; }
+          }
+          return { name: r.name, amt: num(r.amt), date };
+        }
+        if (dayStr.includes('début') || dayStr.includes('debut')) {
+          date = `${y}-${String(m+1).padStart(2,'0')}-01`;
+        } else if (dayStr !== 'variable') {
+          const d = parseInt(dayStr);
+          if (d) date = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        }
+        return { name: r.name, amt: num(r.amt), date };
+      });
+
+    const autoCharge = cardCharges.reduce((s,r) => s + r.amt, 0);
+
+    const balInput = document.getElementById(`${prefix}-balance`);
+    const balance  = num(balInput?.value || 0);
+    const utilPct  = limit > 0 ? (balance / limit * 100) : 0;
     const remaining = threshold - balance;
 
-    // bar color
     const barColor = utilPct >= 30 ? 'var(--red)' : utilPct >= 20 ? 'var(--yellow)' : 'var(--green)';
     const bar = document.getElementById(`${prefix}-util-bar`);
     if (bar) { bar.style.width = Math.min(utilPct, 100) + '%'; bar.style.background = barColor; }
-
     const pctEl = document.getElementById(`${prefix}-util-pct`);
     if (pctEl) { pctEl.textContent = utilPct.toFixed(1) + '%'; pctEl.style.color = barColor; }
-
     const autoEl = document.getElementById(`${prefix}-auto-charges`);
     if (autoEl) autoEl.textContent = '$' + autoCharge.toFixed(2);
 
@@ -1140,8 +1181,7 @@ function updateCreditCards(fixedRows) {
       if (card)  card.style.borderColor = 'var(--red)';
       if (msg) {
         msg.style.display = 'block';
-        msg.style.background = 'rgba(255,77,109,0.1)';
-        msg.style.color = 'var(--red)';
+        msg.style.background = 'rgba(255,77,109,0.1)'; msg.style.color = 'var(--red)';
         msg.style.border = '1px solid rgba(255,77,109,0.3)';
         msg.innerHTML = `⚠️ <strong>Zone rouge dépassée !</strong> Solde $${balance.toFixed(2)} dépasse 30% ($${threshold.toFixed(0)}). Score de crédit à risque.`;
       }
@@ -1150,8 +1190,7 @@ function updateCreditCards(fixedRows) {
       if (card)  card.style.borderColor = 'rgba(255,209,102,0.5)';
       if (msg) {
         msg.style.display = 'block';
-        msg.style.background = 'rgba(255,209,102,0.08)';
-        msg.style.color = 'var(--yellow)';
+        msg.style.background = 'rgba(255,209,102,0.08)'; msg.style.color = 'var(--yellow)';
         msg.style.border = '1px solid rgba(255,209,102,0.3)';
         msg.innerHTML = `⚡ <strong>Attention</strong> — Il te reste <strong>$${remaining.toFixed(0)}</strong> avant la zone rouge (30%).`;
       }
@@ -1160,13 +1199,80 @@ function updateCreditCards(fixedRows) {
       if (card)  card.style.borderColor = 'var(--border)';
       if (msg) {
         msg.style.display = balance > 0 ? 'block' : 'none';
-        msg.style.background = 'rgba(0,210,106,0.08)';
-        msg.style.color = 'var(--green)';
+        msg.style.background = 'rgba(0,210,106,0.08)'; msg.style.color = 'var(--green)';
         msg.style.border = '1px solid rgba(0,210,106,0.2)';
         msg.innerHTML = `✓ <strong>OK</strong> — Marge disponible avant 30% : <strong>$${remaining.toFixed(0)}</strong>`;
       }
     }
+
+    // ── Détail des abonnements chargés ce mois ──
+    const detailEl = document.getElementById(`${prefix}-charges-detail`);
+    if (detailEl) {
+      if (cardCharges.length === 0) {
+        detailEl.innerHTML = '';
+      } else {
+        const rows = cardCharges.map(c => {
+          const isPast = c.date && c.date <= today;
+          const icon   = isPast ? '✅' : '🔜';
+          const dateLbl = c.date
+            ? `<span style="color:var(--muted)">${parseInt(c.date.slice(8))} ${MONTHS_FR[m].slice(0,3)}</span>`
+            : `<span style="color:var(--yellow)">date variable</span>`;
+          return `<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:12px;opacity:${isPast?0.55:1}">
+            <span>${icon} ${c.name} ${dateLbl}</span>
+            <span style="color:var(--red);font-weight:600">-$${c.amt.toFixed(2)}</span>
+          </div>`;
+        }).join('');
+        detailEl.innerHTML = `
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted);margin-bottom:8px">
+            📋 Abonnements ce mois <span style="float:right;color:var(--red)">Total : -$${autoCharge.toFixed(2)}</span>
+          </div>
+          <div style="background:rgba(255,77,109,0.04);border:1px solid rgba(255,77,109,0.12);border-radius:8px;padding:8px 12px">
+            ${rows}
+          </div>`;
+      }
+    }
+
+    // ── Section remboursement à la paie ──
+    const repayEl = document.getElementById(`${prefix}-repay-section`);
+    if (repayEl && paieDates.length > 0) {
+      const pills = paieDates.map(date => {
+        const key    = prefix + '_' + date;
+        const done   = !!repaid[key];
+        const isPast = date <= today;
+        const bg     = done ? 'rgba(0,210,106,0.12)' : (isPast ? 'rgba(255,77,109,0.08)' : 'rgba(77,121,255,0.08)');
+        const border = done ? 'rgba(0,210,106,0.35)' : (isPast ? 'rgba(255,77,109,0.3)' : 'rgba(77,121,255,0.25)');
+        const clr    = done ? 'var(--green)' : (isPast ? 'var(--red)' : 'var(--blue)');
+        const lbl    = done ? '✅ Remboursé' : (isPast ? '⚠️ À rembourser' : '⏳ À venir');
+        const [, mo, d] = date.split('-');
+        return `<div onclick="toggleCcRepaid('${prefix}','${date}')" title="Cliquer pour marquer comme remboursé"
+          style="cursor:pointer;display:flex;flex-direction:column;align-items:center;padding:8px 12px;
+                 border-radius:10px;border:1px solid ${border};background:${bg};min-width:90px;gap:3px">
+          <span style="font-size:11px;font-weight:700;color:${clr}">${lbl}</span>
+          <span style="font-size:12px;font-weight:600;color:var(--text)">Paie du ${parseInt(d)} ${MONTHS_FR[parseInt(mo)-1].slice(0,3)}</span>
+        </div>`;
+      }).join('');
+      const allDone = paieDates.every(d => repaid[prefix + '_' + d]);
+      repayEl.innerHTML = `
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted);margin-bottom:8px">
+          💳 Remboursement à la paie
+          ${allDone ? '<span style="float:right;color:var(--green);font-weight:700">✓ Tout remboursé</span>' : ''}
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px">${pills}</div>`;
+    }
   });
+}
+
+// ─── CC repayment tracking ────────────────────────────────────────────────
+function loadCcRepaid() {
+  try { return JSON.parse(localStorage.getItem('finances_global_cc-repaid') || '{}'); }
+  catch { return {}; }
+}
+function toggleCcRepaid(prefix, date) {
+  const all = loadCcRepaid();
+  const key = prefix + '_' + date;
+  all[key] ? delete all[key] : (all[key] = true);
+  localStorage.setItem('finances_global_cc-repaid', JSON.stringify(all));
+  updateCreditCards(readTableRows('fixed'));
 }
 
 function updateIncomeTotals() {
