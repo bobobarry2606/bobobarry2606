@@ -288,7 +288,7 @@
   <!-- Tabs -->
   <div class="tabs">
     <div class="tab active" onclick="switchTab('mensuel')">📅 Mensuel</div>
-    <div class="tab" onclick="switchTab('crypto')">🟠 Wealthsimple / ETH</div>
+    <div class="tab" onclick="switchTab('crypto')">🟠 Wealthsimple / ETF</div>
     <div class="tab" onclick="switchTab('court')">⚡ Court terme</div>
     <div class="tab" onclick="switchTab('moyen')">📈 Moyen terme</div>
     <div class="tab" onclick="switchTab('long')">🏆 Long terme</div>
@@ -471,76 +471,100 @@
           <div><div style="color:var(--muted);font-size:11px;margin-bottom:4px">Revenu / paie</div><div id="bw-income" style="font-size:17px;font-weight:700;color:var(--green)">$0</div></div>
           <div><div style="color:var(--muted);font-size:11px;margin-bottom:4px">Fixes / paie</div><div id="bw-fixed" style="font-size:17px;font-weight:700;color:var(--red)">$0</div></div>
           <div><div style="color:var(--muted);font-size:11px;margin-bottom:4px">Variables / paie</div><div id="bw-var" style="font-size:17px;font-weight:700;color:var(--yellow)">$0</div></div>
-          <div><div style="color:var(--muted);font-size:11px;margin-bottom:4px">ETH / paie</div><div id="bw-eth" style="font-size:17px;font-weight:700;color:var(--eth)">$0</div></div>
+          <div><div style="color:var(--muted);font-size:11px;margin-bottom:4px">WS / paie</div><div id="bw-eth" style="font-size:17px;font-weight:700;color:var(--eth)">$0</div></div>
           <div><div style="color:var(--muted);font-size:11px;margin-bottom:4px">Libre / paie</div><div id="bw-free" style="font-size:17px;font-weight:700">$0</div></div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- ===================== TAB: WEALTHSIMPLE / ETH ===================== -->
+  <!-- ===================== TAB: WEALTHSIMPLE / ETF ===================== -->
   <div id="tab-crypto" class="tab-content">
     <div class="horizon-header">
-      <h2>Wealthsimple — ETH</h2>
+      <h2>Wealthsimple — ETF</h2>
       <span class="horizon-badge" style="background:var(--eth-bg);color:var(--eth)">DCA Bi-hebdomadaire</span>
     </div>
 
-    <!-- Prix ETH actuel + KPIs -->
+    <!-- KPI bar -->
     <div class="eth-price-bar">
-      <div>
-        <label>Prix ETH actuel (CAD $)</label>
-        <input type="number" id="eth-price-now" placeholder="Ex: 4200" oninput="saveAll()">
-      </div>
-      <div class="eth-stat">Total investi (CAD)<span id="eth-kpi-invested">$0</span></div>
-      <div class="eth-stat">ETH total accumulé<span id="eth-kpi-total-eth" class="eth-accent">0.0000 ETH</span></div>
-      <div class="eth-stat">Valeur actuelle (CAD)<span id="eth-kpi-value">$0</span></div>
-      <div class="eth-stat">P&L total<span id="eth-kpi-pnl">$0</span></div>
-      <div class="eth-stat">P&L %<span id="eth-kpi-pnl-pct">0%</span></div>
-      <div class="eth-stat">Prochain achat prévu<span id="eth-kpi-next" style="color:var(--blue)">—</span></div>
+      <div class="eth-stat">Total prélevé (Débit Desj.)<span id="ws-kpi-withdrawn">$0</span></div>
+      <div class="eth-stat">HLAL investi<span id="ws-kpi-hlal" style="color:var(--green)">$0</span></div>
+      <div class="eth-stat">SPUS investi<span id="ws-kpi-spus" style="color:var(--blue)">$0</span></div>
+      <div class="eth-stat">Prochain prélèvement<span id="ws-kpi-next-withdraw" style="color:var(--eth)">—</span></div>
+      <div class="eth-stat">Prochain achat ETF<span id="ws-kpi-next-buy" style="color:var(--eth)">—</span></div>
     </div>
 
-    <!-- Journal des achats -->
+    <!-- Calendrier des prélèvements -->
     <div class="card" style="margin-bottom:20px">
-      <h3><span class="dot" style="background:var(--eth)"></span>Journal des achats DCA — ETH (Wealthsimple)</h3>
-      <table>
-        <thead><tr>
-          <th>Date d'achat</th>
-          <th style="text-align:right">Investi (CAD $)</th>
-          <th style="text-align:right">Prix ETH (CAD $)</th>
-          <th style="text-align:right;color:var(--eth)">ETH acquis</th>
-          <th style="text-align:right;color:var(--green)">Valeur actuelle</th>
-          <th style="text-align:right">P&L ($)</th>
-          <th style="text-align:right">P&L (%)</th>
-          <th>Notes</th>
-          <th></th>
-        </tr></thead>
-        <tbody id="eth-dca-body"></tbody>
-      </table>
-      <button class="add-row-btn" onclick="addEthRow()">+ Ajouter un achat</button>
+      <h3><span class="dot" style="background:var(--blue)"></span>Prélèvements automatiques — Débit Desjardins</h3>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:14px">
+        💳 <strong style="color:var(--text)">$150</strong> · toutes les 2 semaines · à partir du <strong style="color:var(--text)">2 juillet 2026</strong>
+      </div>
+      <div id="ws-withdrawals-list" style="display:flex;flex-wrap:wrap;gap:8px"></div>
     </div>
 
+    <!-- Journaux HLAL + SPUS -->
     <div class="grid-2">
-      <!-- Graphique valeur vs coût -->
+      <!-- HLAL -->
       <div class="card">
-        <h3><span class="dot" style="background:var(--eth)"></span>Évolution : Valeur vs Coût cumulé</h3>
-        <div class="chart-wrap" style="height:240px"><canvas id="eth-chart"></canvas></div>
-      </div>
-      <!-- Planification prochains achats -->
-      <div class="card">
-        <h3><span class="dot" style="background:var(--blue)"></span>Planification — Prochains achats prévus</h3>
-        <table>
-          <thead><tr><th>Date prévue</th><th style="text-align:right">Montant prévu (CAD $)</th><th>Statut</th><th></th></tr></thead>
-          <tbody id="eth-planned-body"></tbody>
-        </table>
-        <button class="add-row-btn" onclick="addRow('eth-planned')">+ Planifier un achat</button>
-        <div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--border)">
-          <div style="font-size:11px;color:var(--muted);margin-bottom:8px">MONTANT PAR DÉFAUT (bi-hebdo)</div>
-          <div style="display:flex;align-items:center;gap:12px">
-            <input class="editable amount" id="eth-default-amount" type="number" placeholder="Ex: 100" style="width:120px" oninput="saveAll()">
-            <span style="color:var(--muted);font-size:13px">CAD $ par paie</span>
-            <span id="eth-yearly-proj" style="color:var(--eth);font-size:13px;font-weight:600"></span>
-          </div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+          <h3 style="margin:0"><span class="dot" style="background:var(--green)"></span>HLAL</h3>
+          <span style="background:rgba(0,210,106,0.15);color:var(--green);font-size:11px;padding:2px 10px;border-radius:10px;font-weight:700">$50 / 2 sem.</span>
         </div>
+        <div style="display:flex;flex-wrap:wrap;gap:16px;margin-bottom:14px;padding:10px 14px;background:rgba(0,210,106,0.05);border-radius:8px;border:1px solid rgba(0,210,106,0.15)">
+          <div>
+            <div style="font-size:10px;color:var(--muted);margin-bottom:4px">PRIX ACTUEL (CAD $)</div>
+            <input type="number" id="hlal-price-now" placeholder="Ex: 42.50"
+              style="width:110px;background:transparent;border:none;border-bottom:2px solid rgba(0,210,106,0.4);color:var(--green);font-size:18px;font-weight:700;outline:none;padding:2px 4px"
+              oninput="saveAll()">
+          </div>
+          <div class="eth-stat">Investi<span id="hlal-kpi-invested">$0</span></div>
+          <div class="eth-stat">Unités<span id="hlal-kpi-units" style="color:var(--green)">0.000</span></div>
+          <div class="eth-stat">Valeur<span id="hlal-kpi-value">—</span></div>
+        </div>
+        <table>
+          <thead><tr>
+            <th>Date</th>
+            <th style="text-align:right">Montant ($)</th>
+            <th style="text-align:right">Prix unit. ($)</th>
+            <th style="text-align:right;color:var(--green)">Unités</th>
+            <th style="text-align:right">Valeur act.</th>
+            <th></th>
+          </tr></thead>
+          <tbody id="hlal-body"></tbody>
+        </table>
+        <button class="add-row-btn" onclick="addEtfRow('hlal')">+ Ajouter un achat HLAL</button>
+      </div>
+
+      <!-- SPUS -->
+      <div class="card">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+          <h3 style="margin:0"><span class="dot" style="background:var(--blue)"></span>SPUS</h3>
+          <span style="background:rgba(59,130,246,0.15);color:var(--blue);font-size:11px;padding:2px 10px;border-radius:10px;font-weight:700">$100 / 2 sem.</span>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:16px;margin-bottom:14px;padding:10px 14px;background:rgba(59,130,246,0.05);border-radius:8px;border:1px solid rgba(59,130,246,0.15)">
+          <div>
+            <div style="font-size:10px;color:var(--muted);margin-bottom:4px">PRIX ACTUEL (CAD $)</div>
+            <input type="number" id="spus-price-now" placeholder="Ex: 28.70"
+              style="width:110px;background:transparent;border:none;border-bottom:2px solid rgba(59,130,246,0.4);color:var(--blue);font-size:18px;font-weight:700;outline:none;padding:2px 4px"
+              oninput="saveAll()">
+          </div>
+          <div class="eth-stat">Investi<span id="spus-kpi-invested">$0</span></div>
+          <div class="eth-stat">Unités<span id="spus-kpi-units" style="color:var(--blue)">0.000</span></div>
+          <div class="eth-stat">Valeur<span id="spus-kpi-value">—</span></div>
+        </div>
+        <table>
+          <thead><tr>
+            <th>Date</th>
+            <th style="text-align:right">Montant ($)</th>
+            <th style="text-align:right">Prix unit. ($)</th>
+            <th style="text-align:right;color:var(--blue)">Unités</th>
+            <th style="text-align:right">Valeur act.</th>
+            <th></th>
+          </tr></thead>
+          <tbody id="spus-body"></tbody>
+        </table>
+        <button class="add-row-btn" onclick="addEtfRow('spus')">+ Ajouter un achat SPUS</button>
       </div>
     </div>
   </div>
@@ -821,13 +845,6 @@ const TABLE_CONFIGS = {
       { key:'val',   label:'Patrimoine net ($)', ph:'0', cls:'amount', type:'number' }
     ]
   },
-  'eth-planned': {
-    cols: [
-      { key:'date',   label:'Date prévue', ph:'', cls:'', inputType:'date' },
-      { key:'amount', label:'Montant ($)', ph:'100', cls:'amount expense', type:'number' },
-      { key:'status', label:'Statut', ph:'Prévu', cls:'category' }
-    ]
-  }
 };
 
 // ─── Default data ──────────────────────────────────────────────────────────
@@ -868,7 +885,6 @@ const DEFAULTS = {
   ],
   liabilities: [],
   'networth-history': [],
-  'eth-planned': []
 };
 
 // ─── Storage key ──────────────────────────────────────────────────────────
@@ -906,8 +922,9 @@ function readTableRows(id) {
 
 function saveAll() {
   Object.keys(TABLE_CONFIGS).forEach(saveTable);
-  saveEthRows();
-  ['retire-monthly','retire-rate','retire-years','eth-price-now','eth-default-amount','visa-balance','mc-balance'].forEach(id => {
+  saveEtfRows('hlal');
+  saveEtfRows('spus');
+  ['retire-monthly','retire-rate','retire-years','hlal-price-now','spus-price-now','visa-balance','mc-balance'].forEach(id => {
     const el = document.getElementById(id);
     if (el) localStorage.setItem(globalKey(id), el.value);
   });
@@ -1064,42 +1081,44 @@ function updateIncomeTotals() {
   if (el2) el2.textContent = '$' + Math.round(totalPaie * nP).toLocaleString('fr-CA') + ' /mois';
 }
 
-// ─── ETH DCA table ─────────────────────────────────────────────────────────
-function loadEthRows() {
-  try {
-    const d = localStorage.getItem(storageKey('eth-dca'));
-    return d ? JSON.parse(d) : [];
-  } catch { return []; }
-}
+// ─── Wealthsimple ETF constants ───────────────────────────────────────────────
+const WS_WITHDRAW_BASE = '2026-07-02'; // prélèvement bi-hebdo Débit Desjardins
+const WS_BUY_BASE      = '2026-07-06'; // achat bi-hebdo HLAL + SPUS
+const WS_HLAL_AMT      = 50;
+const WS_SPUS_AMT      = 100;
+const WS_INTERVAL      = 14; // jours
 
-function saveEthRows() {
-  const rows = readEthRows();
-  localStorage.setItem(storageKey('eth-dca'), JSON.stringify(rows));
+// ─── ETF journal (HLAL / SPUS) ────────────────────────────────────────────────
+function loadEtfRows(etf) {
+  try { return JSON.parse(localStorage.getItem(globalKey('etf-' + etf)) || '[]'); }
+  catch { return []; }
 }
-
-function readEthRows() {
-  const tbody = document.getElementById('eth-dca-body');
+function saveEtfRows(etf) {
+  const rows = readEtfRows(etf);
+  localStorage.setItem(globalKey('etf-' + etf), JSON.stringify(rows));
+}
+function readEtfRows(etf) {
+  const tbody = document.getElementById(etf + '-body');
   if (!tbody) return [];
   return Array.from(tbody.querySelectorAll('tr')).map(tr => ({
-    date:   tr.querySelector('[data-col="date"]')?.value || '',
+    date:   tr.querySelector('[data-col="date"]')?.value   || '',
     amount: tr.querySelector('[data-col="amount"]')?.value || '',
-    price:  tr.querySelector('[data-col="price"]')?.value || '',
-    notes:  tr.querySelector('[data-col="notes"]')?.value || ''
+    price:  tr.querySelector('[data-col="price"]')?.value  || ''
   }));
 }
-
-function renderEthTable() {
-  const tbody = document.getElementById('eth-dca-body');
+function renderEtfTable(etf) {
+  const tbody = document.getElementById(etf + '-body');
   if (!tbody) return;
   tbody.innerHTML = '';
-  loadEthRows().forEach(r => appendEthRow(r));
+  loadEtfRows(etf).forEach(r => appendEtfRow(etf, r));
 }
-
-function appendEthRow(data = {}) {
-  const tbody = document.getElementById('eth-dca-body');
+function appendEtfRow(etf, data = {}) {
+  const tbody = document.getElementById(etf + '-body');
+  if (!tbody) return;
+  const color = etf === 'hlal' ? 'var(--green)' : 'var(--blue)';
   const tr = document.createElement('tr');
 
-  const mkInput = (col, ph, cls, type) => {
+  const mk = (col, ph, cls, type) => {
     const td = document.createElement('td');
     const inp = document.createElement('input');
     inp.className = 'editable ' + (cls || '');
@@ -1107,25 +1126,19 @@ function appendEthRow(data = {}) {
     inp.value = data[col] || '';
     inp.dataset.col = col;
     if (type) inp.type = type;
-    inp.addEventListener('input', () => { updateEthRowCalcs(tr); saveAll(); });
+    inp.addEventListener('input', () => { updateEtfRowCalcs(etf, tr); saveAll(); });
     td.appendChild(inp);
     return td;
   };
+  tr.appendChild(mk('date',   '',    '',               'date'));
+  tr.appendChild(mk('amount', etf === 'hlal' ? '50' : '100', 'amount expense', 'number'));
+  tr.appendChild(mk('price',  '0',   'amount',         'number'));
 
-  tr.appendChild(mkInput('date',   '',    '', 'date'));
-  tr.appendChild(mkInput('amount', '100', 'amount expense', 'number'));
-  tr.appendChild(mkInput('price',  '0',   'amount', 'number'));
-
-  // Computed: ETH acquis
-  const tdEth = document.createElement('td'); tdEth.className = 'calc'; tdEth.dataset.calc = 'eth'; tr.appendChild(tdEth);
-  // Computed: Valeur actuelle
-  const tdVal = document.createElement('td'); tdVal.className = 'calc'; tdVal.dataset.calc = 'val'; tr.appendChild(tdVal);
-  // Computed: P&L $
-  const tdPnl = document.createElement('td'); tdPnl.className = 'calc'; tdPnl.dataset.calc = 'pnl'; tr.appendChild(tdPnl);
-  // Computed: P&L %
-  const tdPct = document.createElement('td'); tdPct.className = 'calc'; tdPct.dataset.calc = 'pct'; tr.appendChild(tdPct);
-
-  tr.appendChild(mkInput('notes', 'Ex: DCA #1', 'category', ''));
+  // Computed: unités
+  const tdU = document.createElement('td'); tdU.className = 'calc'; tdU.dataset.calc = 'units';
+  tdU.style.color = color; tr.appendChild(tdU);
+  // Computed: valeur actuelle
+  const tdV = document.createElement('td'); tdV.className = 'calc'; tdV.dataset.calc = 'val'; tr.appendChild(tdV);
 
   const tdDel = document.createElement('td');
   const btn = document.createElement('button');
@@ -1135,34 +1148,90 @@ function appendEthRow(data = {}) {
   tr.appendChild(tdDel);
 
   tbody.appendChild(tr);
-  updateEthRowCalcs(tr);
+  updateEtfRowCalcs(etf, tr);
 }
-
-function updateEthRowCalcs(tr) {
-  const priceNow = num(document.getElementById('eth-price-now')?.value);
+function updateEtfRowCalcs(etf, tr) {
+  const priceNow = num(document.getElementById(etf + '-price-now')?.value);
   const amount   = num(tr.querySelector('[data-col="amount"]')?.value);
   const priceBuy = num(tr.querySelector('[data-col="price"]')?.value);
-  const ethAcq   = priceBuy > 0 ? amount / priceBuy : 0;
-  const valNow   = ethAcq * priceNow;
-  const pnl      = valNow - amount;
-  const pnlPct   = amount > 0 ? (pnl / amount * 100) : 0;
-
-  const tdEth = tr.querySelector('[data-calc="eth"]');
-  const tdVal = tr.querySelector('[data-calc="val"]');
-  const tdPnl = tr.querySelector('[data-calc="pnl"]');
-  const tdPct = tr.querySelector('[data-calc="pct"]');
-
-  if (tdEth) tdEth.textContent = ethAcq > 0 ? ethAcq.toFixed(6) + ' Ξ' : '—';
-  if (tdVal) { tdVal.textContent = priceNow > 0 ? fmt(valNow) : '—'; tdVal.className = 'calc pos'; }
-  if (tdPnl) { tdPnl.textContent = pnl !== 0 ? (pnl >= 0 ? '+' : '') + fmt(pnl) : '—'; tdPnl.className = 'calc ' + (pnl >= 0 ? 'pos' : 'neg'); }
-  if (tdPct) { tdPct.textContent = pnlPct !== 0 ? (pnlPct >= 0 ? '+' : '') + pnlPct.toFixed(1) + '%' : '—'; tdPct.className = 'calc ' + (pnlPct >= 0 ? 'pos' : 'neg'); }
+  const units    = priceBuy > 0 ? amount / priceBuy : 0;
+  const valNow   = units * priceNow;
+  const tdU = tr.querySelector('[data-calc="units"]');
+  const tdV = tr.querySelector('[data-calc="val"]');
+  if (tdU) tdU.textContent = units > 0 ? units.toFixed(4) : '—';
+  if (tdV) tdV.textContent = priceNow > 0 && units > 0 ? fmt(valNow) : '—';
+}
+function addEtfRow(etf) { appendEtfRow(etf, {}); saveAll(); }
+function refreshEtfCalcs() {
+  ['hlal','spus'].forEach(etf =>
+    document.querySelectorAll('#' + etf + '-body tr').forEach(tr => updateEtfRowCalcs(etf, tr))
+  );
 }
 
-function addEthRow() { appendEthRow({}); saveAll(); }
-
-function refreshEthCalcs() {
-  document.querySelectorAll('#eth-dca-body tr').forEach(tr => updateEthRowCalcs(tr));
+// ─── Withdrawal calendar ─────────────────────────────────────────────────────
+function loadWsDone() {
+  try { return new Set(JSON.parse(localStorage.getItem('finances_global_ws-done') || '[]')); }
+  catch { return new Set(); }
 }
+function toggleWsDone(date) {
+  const done = loadWsDone();
+  done.has(date) ? done.delete(date) : done.add(date);
+  localStorage.setItem('finances_global_ws-done', JSON.stringify([...done]));
+  renderWsWithdrawals();
+  recalc();
+}
+function renderWsWithdrawals() {
+  const el = document.getElementById('ws-withdrawals-list');
+  if (!el) return;
+  const today = new Date().toISOString().slice(0,10);
+  const done  = loadWsDone();
+  const base  = new Date(WS_WITHDRAW_BASE);
+  const chips = [];
+  for (let n = 0; n < 26; n++) {   // 1 an de dates
+    const d = new Date(base.getTime() + n * WS_INTERVAL * 86400000);
+    const ds = d.toISOString().slice(0,10);
+    const isDone = done.has(ds);
+    const isPast = ds <= today;
+    const icon  = isDone ? '✅' : (isPast ? '⚠️' : '🔜');
+    const bg    = isDone ? 'rgba(0,210,106,0.12)' : (isPast ? 'rgba(255,77,109,0.10)' : 'rgba(59,130,246,0.10)');
+    const border= isDone ? 'rgba(0,210,106,0.35)' : (isPast ? 'rgba(255,77,109,0.35)' : 'rgba(59,130,246,0.25)');
+    const [y,mo,day] = ds.split('-');
+    const label = `${parseInt(day)} ${MONTHS_FR[parseInt(mo)-1].slice(0,3)}`;
+    chips.push(`<div onclick="toggleWsDone('${ds}')" title="Cliquer pour marquer comme fait"
+      style="cursor:pointer;display:inline-flex;flex-direction:column;align-items:center;padding:8px 12px;
+             border-radius:10px;border:1px solid ${border};background:${bg};min-width:72px;font-size:12px;gap:3px">
+      <span style="font-size:16px">${icon}</span>
+      <strong style="color:var(--text)">${label}</strong>
+      <span style="color:var(--green);font-weight:700">$150</span>
+    </div>`);
+  }
+  el.innerHTML = chips.join('');
+}
+
+// ─── Wealthsimple global KPIs ─────────────────────────────────────────────────
+function updateWsKpis(hlalRows, spusRows, hlalPrice, spusPrice, hlalUnits, spusUnits, hlalValue, spusValue) {
+  const today = new Date().toISOString().slice(0,10);
+  const done  = loadWsDone();
+  set('ws-kpi-withdrawn', fmt(done.size * 150));
+  set('ws-kpi-hlal', fmt(hlalRows.reduce((s,r) => s + num(r.amount), 0)));
+  set('ws-kpi-spus', fmt(spusRows.reduce((s,r) => s + num(r.amount), 0)));
+
+  // Prochain prélèvement
+  const baseW = new Date(WS_WITHDRAW_BASE);
+  for (let n = 0; n < 26; n++) {
+    const d = new Date(baseW.getTime() + n * WS_INTERVAL * 86400000).toISOString().slice(0,10);
+    if (d >= today && !done.has(d)) { set('ws-kpi-next-withdraw', d); break; }
+  }
+  // Prochain achat
+  const baseB = new Date(WS_BUY_BASE);
+  for (let n = 0; n < 26; n++) {
+    const d = new Date(baseB.getTime() + n * WS_INTERVAL * 86400000).toISOString().slice(0,10);
+    if (d >= today) { set('ws-kpi-next-buy', d + ' — $' + (WS_HLAL_AMT + WS_SPUS_AMT)); break; }
+  }
+}
+
+// ─── readEthRows shim (used in older recalc refs) ────────────────────────────
+function readEthRows() { return []; }
 
 // ─── Auto-schedule: resolve which fixed charges fall in a date range ────────
 function getChargesForPeriod(periodStart, periodEnd, fixedRows, y, m) {
@@ -1316,7 +1385,7 @@ function renderPaieCards() {
           <span class="pr-val" style="color:var(--yellow)">-${fmtC(paieVarR)}</span>
         </div>
         <div class="paie-row">
-          <span class="pr-label">🟠 ETH Wealthsimple</span>
+          <span class="pr-label">🟠 Wealthsimple (HLAL+SPUS)</span>
           <span class="pr-val" style="color:var(--eth)">-${fmtC(ethAmt)}</span>
         </div>
         <div class="paie-row total">
@@ -1401,7 +1470,8 @@ function recalc() {
   const assetRows    = readTableRows('assets');
   const liabRows     = readTableRows('liabilities');
   const investRows   = readTableRows('investments');
-  const ethRows      = readEthRows();
+  const hlalRows     = readEtfRows('hlal');
+  const spusRows     = readEtfRows('spus');
 
   // Revenus = somme des montants réels de chaque paie (saisis individuellement)
   const paieDates   = loadPaieDates();
@@ -1420,28 +1490,30 @@ function recalc() {
   const totalVarReal   = paieVarReal * nPaies;
   const paieIncome     = totalIncome; // pour rétrocompat
 
-  // ETH monthly equivalent (montant investi / mois courant)
-  const monthKey = `${currentMonth.year}-${String(currentMonth.month+1).padStart(2,'0')}`;
-  const ethMonthly = ethRows.filter(r => r.date && r.date.startsWith(monthKey)).reduce((s,r) => s + num(r.amount), 0);
-  const ethPerPaycheck = num(document.getElementById('eth-default-amount')?.value);
+  // Wealthsimple: $150 bi-hebdo = $300/mois (2 paies)
+  const wsPerPaycheck  = 150; // HLAL $50 + SPUS $100
+  const ethPerPaycheck = wsPerPaycheck; // alias utilisé ailleurs
+  const wsMonthly      = wsPerPaycheck * (paieDates.length || 2);
 
   const totalExpenses  = totalFixed + totalVarReal;
-  const net            = totalIncomeAll - totalExpenses - ethMonthly;
+  const net            = totalIncomeAll - totalExpenses - wsMonthly;
   const saveRate       = totalIncomeAll > 0 ? ((totalIncomeAll - totalExpenses) / totalIncomeAll * 100) : 0;
 
-  // ETH totals
-  const priceNow   = num(document.getElementById('eth-price-now')?.value);
-  const totalInvested = ethRows.reduce((s,r) => s + num(r.amount), 0);
-  const totalEth      = ethRows.reduce((s,r) => {
-    const p = num(r.price); return s + (p > 0 ? num(r.amount)/p : 0);
-  }, 0);
-  const totalEthValue = totalEth * priceNow;
-  const totalPnl      = totalEthValue - totalInvested;
-  const totalPnlPct   = totalInvested > 0 ? totalPnl/totalInvested*100 : 0;
+  // Wealthsimple ETF totals
+  const hlalPrice    = num(document.getElementById('hlal-price-now')?.value);
+  const spusPrice    = num(document.getElementById('spus-price-now')?.value);
+  const hlalInvested = hlalRows.reduce((s,r) => s + num(r.amount), 0);
+  const spusInvested = spusRows.reduce((s,r) => s + num(r.amount), 0);
+  const totalInvested = hlalInvested + spusInvested;
+  const hlalUnits    = hlalRows.reduce((s,r) => { const p=num(r.price); return s+(p>0?num(r.amount)/p:0); }, 0);
+  const spusUnits    = spusRows.reduce((s,r) => { const p=num(r.price); return s+(p>0?num(r.amount)/p:0); }, 0);
+  const hlalValue    = hlalUnits * hlalPrice;
+  const spusValue    = spusUnits * spusPrice;
+  const totalEtfValue = hlalValue + spusValue;
 
   const totalAssets = assetRows.reduce((s,r) => s + num(r.val), 0)
                     + investRows.reduce((s,r) => s + num(r.value), 0)
-                    + totalEthValue;
+                    + totalEtfValue;
   const totalLiab   = liabRows.reduce((s,r) => s + num(r.val), 0);
   const netWorth    = totalAssets - totalLiab;
 
@@ -1490,23 +1562,16 @@ function recalc() {
   const bwFreeEl = document.getElementById('bw-free');
   if (bwFreeEl) { bwFreeEl.textContent = (bwFreeAvg >= 0 ? '' : '-') + fmtS(Math.abs(bwFreeAvg)); bwFreeEl.style.color = bwFreeAvg >= 0 ? 'var(--green)' : 'var(--red)'; }
 
-  // ── ETH KPIs ──
-  set('eth-kpi-invested',   fmt(totalInvested));
-  set('eth-kpi-total-eth',  totalEth.toFixed(6) + ' ETH');
-  set('eth-kpi-value',      priceNow > 0 ? fmt(totalEthValue) : '—');
-  const pnlEl = document.getElementById('eth-kpi-pnl');
-  if (pnlEl) { pnlEl.textContent = totalInvested > 0 ? (totalPnl >= 0 ? '+' : '') + fmt(totalPnl) : '—'; pnlEl.style.color = totalPnl >= 0 ? 'var(--green)' : 'var(--red)'; }
-  const pctEl = document.getElementById('eth-kpi-pnl-pct');
-  if (pctEl) { pctEl.textContent = totalInvested > 0 ? (totalPnlPct >= 0 ? '+' : '') + totalPnlPct.toFixed(1) + '%' : '—'; pctEl.style.color = totalPnlPct >= 0 ? 'var(--green)' : 'var(--red)'; }
+  // ── Wealthsimple ETF KPIs ──
+  updateWsKpis(hlalRows, spusRows, hlalPrice, spusPrice, hlalUnits, spusUnits, hlalValue, spusValue);
 
-  // Prochain achat prévu
-  const planned = readTableRows('eth-planned').filter(r => r.date).sort((a,b) => a.date.localeCompare(b.date));
-  const nextBuy = planned.find(r => r.date >= new Date().toISOString().slice(0,10));
-  set('eth-kpi-next', nextBuy ? nextBuy.date + (nextBuy.amount ? ' — ' + fmt(num(nextBuy.amount)) : '') : '—');
-
-  // ETH yearly projection
-  const yearlyEl = document.getElementById('eth-yearly-proj');
-  if (yearlyEl && ethPerPaycheck > 0) yearlyEl.textContent = `→ ${fmt(ethPerPaycheck * 26)}/an investi`;
+  // Per-ETF KPIs
+  set('hlal-kpi-invested', fmt(hlalInvested));
+  set('hlal-kpi-units',    hlalUnits.toFixed(3));
+  set('hlal-kpi-value',    hlalPrice > 0 ? fmt(hlalValue) : '—');
+  set('spus-kpi-invested', fmt(spusInvested));
+  set('spus-kpi-units',    spusUnits.toFixed(3));
+  set('spus-kpi-value',    spusPrice > 0 ? fmt(spusValue) : '—');
 
   // ── Actifs / Passifs ──
   set('total-assets',       fmt(totalAssets));
@@ -1760,10 +1825,12 @@ function switchTab(name) {
 function init() {
   document.getElementById('current-month').textContent = MONTHS_FR[currentMonth.month] + ' ' + currentMonth.year;
   Object.keys(TABLE_CONFIGS).forEach(renderTable);
-  renderEthTable();
+  renderEtfTable('hlal');
+  renderEtfTable('spus');
+  renderWsWithdrawals();
 
   // Global fields
-  ['retire-monthly','retire-rate','retire-years','eth-price-now','eth-default-amount','visa-balance','mc-balance'].forEach(id => {
+  ['retire-monthly','retire-rate','retire-years','hlal-price-now','spus-price-now','visa-balance','mc-balance'].forEach(id => {
     const el = document.getElementById(id);
     if (el) {
       const v = localStorage.getItem(globalKey(id));
