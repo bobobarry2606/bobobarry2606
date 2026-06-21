@@ -1281,6 +1281,18 @@ function getChargesForPeriod(periodStart, periodEnd, fixedRows, y, m) {
       charges.push({ name: r.name, amt, date: ds, card: r.card, paid: ds <= today });
   });
 
+  // Achats ETF Wealthsimple : HLAL + SPUS toutes les 2 semaines depuis le 6 juillet
+  const wsBase = new Date(WS_BUY_BASE);
+  for (let n = 0; n < 100; n++) {
+    const d = new Date(wsBase.getTime() + n * WS_INTERVAL * 86400000);
+    const ds = d.toISOString().slice(0,10);
+    if (ds > periodEnd) break;
+    if (ds >= periodStart && ds <= periodEnd) {
+      charges.push({ name: 'HLAL (Wealthsimple)', amt: WS_HLAL_AMT, date: ds, card: 'Débit', paid: ds <= today, etf: true });
+      charges.push({ name: 'SPUS (Wealthsimple)', amt: WS_SPUS_AMT, date: ds, card: 'Débit', paid: ds <= today, etf: true });
+    }
+  }
+
   return charges.sort((a,b) => (a.date||'9999') < (b.date||'9999') ? -1 : 1);
 }
 
