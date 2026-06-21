@@ -976,17 +976,29 @@ function storageKey(tableId) {
 }
 function globalKey(k) { return `finances_global_${k}`; }
 
+// Tables dont les données sont communes à tous les mois
+const GLOBAL_TABLES = ['fixed', 'assets', 'liabilities', 'investments'];
+
+function tableKey(id) {
+  return GLOBAL_TABLES.includes(id) ? globalKey(id) : storageKey(id);
+}
+
 // ─── Load / Save ──────────────────────────────────────────────────────────
 function loadTable(id) {
   try {
-    const d = localStorage.getItem(storageKey(id));
-    return d ? JSON.parse(d) : JSON.parse(JSON.stringify(DEFAULTS[id] || []));
+    const d = localStorage.getItem(tableKey(id));
+    const parsed = d ? JSON.parse(d) : null;
+    // Utiliser DEFAULTS si rien n'est stocké OU si tableau vide alors que DEFAULTS a des données
+    if (!parsed || (Array.isArray(parsed) && parsed.length === 0 && (DEFAULTS[id] || []).length > 0)) {
+      return JSON.parse(JSON.stringify(DEFAULTS[id] || []));
+    }
+    return parsed;
   } catch { return JSON.parse(JSON.stringify(DEFAULTS[id] || [])); }
 }
 
 function saveTable(id) {
   const rows = readTableRows(id);
-  localStorage.setItem(storageKey(id), JSON.stringify(rows));
+  localStorage.setItem(tableKey(id), JSON.stringify(rows));
 }
 
 function readTableRows(id) {
