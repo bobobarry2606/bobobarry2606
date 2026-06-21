@@ -259,14 +259,14 @@
   <!-- KPIs -->
   <div class="kpi-grid">
     <div class="kpi-card green">
-      <div class="label">Revenu par paie</div>
+      <div class="label">Revenu du mois</div>
       <div class="value" id="kpi-income">$0</div>
-      <div class="sub" id="kpi-income-sub">Mensuel : $0</div>
+      <div class="sub" id="kpi-income-sub">Total des paies</div>
     </div>
     <div class="kpi-card red">
       <div class="label">Dépenses du mois</div>
       <div class="value" id="kpi-expenses">$0</div>
-      <div class="sub">Factures + variables + ETH</div>
+      <div class="sub">Factures + variables + WS + épargne</div>
     </div>
     <div class="kpi-card blue">
       <div class="label">Solde net mensuel</div>
@@ -650,7 +650,7 @@
     <!-- Suivi + Dépenses prévues -->
     <div class="grid-2">
       <div class="card">
-        <h3><span class="dot" style="background:var(--green)"></span>Suivi de l'épargne — mise à jour manuelle</h3>
+        <h3><span class="dot" style="background:var(--green)"></span>Suivi de l'épargne — auto (virements de paie)</h3>
         <table>
           <thead><tr>
             <th>Objectif</th>
@@ -691,13 +691,10 @@
     </div>
     <div class="grid-2">
       <div class="card">
-        <h3><span class="dot" style="background:var(--blue)"></span>Projets & Objectifs d'épargne</h3>
-        <table>
-          <thead><tr><th>Projet</th><th>Cible ($)</th><th>Épargné ($)</th><th>Échéance</th><th></th></tr></thead>
-          <tbody id="savings-goals-body"></tbody>
-        </table>
-        <button class="add-row-btn" onclick="addRow('savings-goals')">+ Ajouter projet</button>
-        <div id="savings-goals-bars" style="margin-top:16px"></div>
+        <h3><span class="dot" style="background:var(--blue)"></span>Projets & Objectifs d'épargne
+          <span style="font-size:10px;color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0;margin-left:4px">(synchronisé avec le programme d'épargne)</span>
+        </h3>
+        <div id="savings-goals-bars-moyen"></div>
       </div>
       <div class="card">
         <h3><span class="dot" style="background:var(--yellow)"></span>Dettes moyen terme</h3>
@@ -1169,9 +1166,6 @@ function updateCreditCards(fixedRows) {
         msg.innerHTML = `✓ <strong>OK</strong> — Marge disponible avant 30% : <strong>$${remaining.toFixed(0)}</strong>`;
       }
     }
-
-    // Update fixed total
-    document.getElementById('fixed-total');
   });
 }
 
@@ -1333,9 +1327,6 @@ function updateWsKpis(hlalRows, spusRows, hlalPrice, spusPrice, hlalUnits, spusU
     if (d >= today) { set('ws-kpi-next-buy', d + ' — $' + (WS_HLAL_AMT + WS_SPUS_AMT)); break; }
   }
 }
-
-// ─── readEthRows shim (used in older recalc refs) ────────────────────────────
-function readEthRows() { return []; }
 
 // ─── Auto-schedule: resolve which fixed charges fall in a date range ────────
 function getChargesForPeriod(periodStart, periodEnd, fixedRows, y, m) {
@@ -1796,8 +1787,7 @@ function recalc() {
   renderProjection(net);
   renderRetire();
   renderSavingsGoalBars();
-  // renderEthChart removed (ETH replaced by ETF tracker)
-  refreshEthCalcs();
+  refreshEtfCalcs();
 }
 
 function set(id, val) {
@@ -1955,24 +1945,26 @@ function renderSavingsGoalBars() {
     if (remaining <= 0) break;
   }
 
-  const wrap = document.getElementById('savings-goals-bars');
-  if (wrap) {
-    wrap.innerHTML = '';
-    rows.forEach((r, i) => {
-      const target = targets[i];
-      const saved  = distributed[i];
-      const pct    = target > 0 ? Math.min(100, saved/target*100) : 0;
-      const color  = pct >= 100 ? 'var(--green)' : pct >= 50 ? 'var(--blue)' : 'var(--yellow)';
-      wrap.innerHTML += `
-        <div class="goal-item">
-          <div class="goal-header">
-            <span class="goal-name">${r.name || '—'}</span>
-            <span class="goal-pct">${fmt(saved)} / ${fmt(target)} (${pct.toFixed(0)}%)</span>
-          </div>
-          <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${color}"></div></div>
-        </div>`;
-    });
-  }
+  // Build the bars HTML once, then mirror it into every container (Court + Moyen terme)
+  let barsHTML = '';
+  rows.forEach((r, i) => {
+    const target = targets[i];
+    const saved  = distributed[i];
+    const pct    = target > 0 ? Math.min(100, saved/target*100) : 0;
+    const color  = pct >= 100 ? 'var(--green)' : pct >= 50 ? 'var(--blue)' : 'var(--yellow)';
+    barsHTML += `
+      <div class="goal-item">
+        <div class="goal-header">
+          <span class="goal-name">${r.name || '—'}</span>
+          <span class="goal-pct">${fmt(saved)} / ${fmt(target)} (${pct.toFixed(0)}%)</span>
+        </div>
+        <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${color}"></div></div>
+      </div>`;
+  });
+  ['savings-goals-bars', 'savings-goals-bars-moyen'].forEach(wid => {
+    const wrap = document.getElementById(wid);
+    if (wrap) wrap.innerHTML = barsHTML;
+  });
 
   // Update the 3 phase cards on Court Terme tab + savings-goals table inputs
   const tbodies = document.querySelectorAll('#savings-goals-body');
@@ -1994,47 +1986,6 @@ function renderSavingsGoalBars() {
       const savedInp = row.querySelector('input[data-col="saved"]');
       if (savedInp) savedInp.value = saved.toFixed(2);
     });
-  });
-}
-
-// ─── ETH chart ────────────────────────────────────────────────────────────
-function renderEthChart(ethRows, priceNow) {
-  const sorted = [...ethRows].filter(r => r.date && num(r.amount) > 0)
-    .sort((a,b) => a.date.localeCompare(b.date));
-  if (sorted.length === 0) { if (charts.eth) { charts.eth.destroy(); charts.eth = null; } return; }
-
-  const labels = [], costData = [], valueData = [];
-  let cumCost = 0, cumEth = 0;
-  sorted.forEach(r => {
-    const p = num(r.price);
-    const eth = p > 0 ? num(r.amount)/p : 0;
-    cumCost += num(r.amount);
-    cumEth  += eth;
-    labels.push(r.date);
-    costData.push(Math.round(cumCost));
-    valueData.push(priceNow > 0 ? Math.round(cumEth * priceNow) : null);
-  });
-
-  if (charts.eth) charts.eth.destroy();
-  const ctx = document.getElementById('eth-chart')?.getContext('2d');
-  if (!ctx) return;
-  charts.eth = new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels,
-      datasets: [
-        { label:'Coût cumulé (CAD)', data: costData, borderColor:'#ff4d6d', backgroundColor:'rgba(255,77,109,0.08)', fill:true, tension:0.3, pointRadius:4 },
-        { label:'Valeur actuelle (CAD)', data: valueData, borderColor:'#f7931a', backgroundColor:'rgba(247,147,26,0.1)', fill:true, tension:0.3, pointRadius:4 }
-      ]
-    },
-    options: {
-      responsive:true, maintainAspectRatio:false,
-      plugins: { legend:{ labels:{ color:'#94a3b8' } } },
-      scales: {
-        x:{ grid:{color:'rgba(255,255,255,0.04)'}, ticks:{color:'#94a3b8', maxTicksLimit:8} },
-        y:{ grid:{color:'rgba(255,255,255,0.04)'}, ticks:{color:'#94a3b8', callback: v=>'$'+v.toLocaleString()} }
-      }
-    }
   });
 }
 
