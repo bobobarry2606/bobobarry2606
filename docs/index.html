@@ -23,7 +23,7 @@
 }
 *{margin:0;padding:0;box-sizing:border-box}
 html{scroll-behavior:smooth}
-body{font-family:'Jost',system-ui,sans-serif;font-size:16px;line-height:1.6;color:var(--ink);background:var(--cream)}
+body{font-family:'Jost',system-ui,sans-serif;font-size:16px;line-height:1.6;color:var(--ink);background:var(--cream);overflow-x:clip}
 h1,h2,h3,.serif{font-family:'Bodoni Moda',Georgia,serif;color:var(--navy);line-height:1.18;font-weight:600}
 img{max-width:100%;display:block}
 a{color:inherit;text-decoration:none}
@@ -38,12 +38,12 @@ h2{font-size:clamp(1.7rem,3.6vw,2.5rem);margin-bottom:14px}
 .gold-rule{width:56px;height:3px;background:var(--gold);border-radius:2px;margin:18px 0 26px}
 .center .gold-rule{margin-left:auto;margin-right:auto}
 
-/* Reveal on scroll */
-.reveal{opacity:0;transform:translateY(24px);transition:opacity .55s ease,transform .55s ease}
-.reveal.in{opacity:1;transform:none}
+/* Reveal on scroll (uniquement si JS est actif : le contenu reste visible sans JS) */
+html.js .reveal{opacity:0;transform:translateY(24px);transition:opacity .55s ease,transform .55s ease}
+html.js .reveal.in{opacity:1;transform:none}
 @media (prefers-reduced-motion: reduce){
   html{scroll-behavior:auto}
-  .reveal{opacity:1;transform:none;transition:none}
+  html.js .reveal{opacity:1;transform:none;transition:none}
   *{animation:none!important;transition:none!important}
 }
 
@@ -175,6 +175,10 @@ footer.site .fbrand span{color:var(--gold)}
 @media (max-width:720px){
   section{padding:64px 0}
   .nav ul{display:none}
+  .nav{gap:12px}
+  .nav .btn{margin-left:auto;padding:9px 14px;font-size:.85rem;flex:none}
+  .nav .brand{min-width:0}
+  .nav .brand span{white-space:nowrap}
   .stats .wrap{grid-template-columns:repeat(2,1fr);gap:22px}
   .grid-3,.grid-2{grid-template-columns:1fr}
   .plan.pop{order:-1}
@@ -182,6 +186,7 @@ footer.site .fbrand span{color:var(--gold)}
 @media (max-width:520px){
   .grid-4{grid-template-columns:1fr}
   .steps{grid-template-columns:1fr}
+  .nav .brand span{display:none}
 }
 </style>
 </head>
@@ -436,7 +441,7 @@ footer.site .fbrand span{color:var(--gold)}
           <p>ScentSenegal est le pionnier du marketing olfactif professionnel au Sénégal. Prendre de l'avance, c'est marquer les esprits en premier.</p>
         </article>
         <article class="why-item reveal">
-          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#C8952C" stroke-width="1.8" aria-hidden="true"><path d="M12 3l7 4v5c0 4.4-3 8.2-7 9-4-  .8-7-4.6-7-9V7l7-4Z"/></svg>
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#C8952C" stroke-width="1.8" aria-hidden="true"><path d="M12 3l7 4v5c0 4.4-3 8.2-7 9-4-.8-7-4.6-7-9V7l7-4Z"/></svg>
           <h3>Produits testés, jamais improvisés</h3>
           <p>Chaque huile essentielle est testée personnellement avant d'être déployée chez un client. La constance fait la signature.</p>
         </article>
@@ -478,6 +483,7 @@ footer.site .fbrand span{color:var(--gold)}
 </footer>
 
 <script>
+  document.documentElement.classList.add('js');
   const obs = new IntersectionObserver((entries) => {
     for (const e of entries) if (e.isIntersecting) { e.target.classList.add('in'); obs.unobserve(e.target); }
   }, { threshold: 0.12 });
