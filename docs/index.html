@@ -166,6 +166,49 @@ footer.site .wrap{display:flex;align-items:center;gap:16px;flex-wrap:wrap;justif
 footer.site .fbrand{font-family:'Bodoni Moda',serif;color:#E8DFC8;font-size:1.05rem}
 footer.site .fbrand span{color:var(--gold)}
 
+/* Ornement diamant entre filets dorés (signature luxe) */
+.orn{display:flex;align-items:center;gap:14px;margin:14px 0 26px}
+.orn::before,.orn::after{content:"";height:1px;width:64px;background:rgba(200,149,44,.5)}
+.orn .d{color:var(--gold);font-size:.72rem;line-height:1}
+.center .orn{justify-content:center}
+
+/* Filets dorés en haut et bas des sections sombres */
+.hero,.final{position:relative}
+.hero::before,.hero::after,.final::before,.final::after{content:"";position:absolute;left:0;right:0;height:1px;background:rgba(200,149,44,.35)}
+.hero::before,.final::before{top:0}
+.hero::after,.final::after{bottom:0}
+.hero .kicker{letter-spacing:.4em}
+
+/* CTA contour doré, capitales espacées */
+.btn-outline-gold{border:1px solid rgba(200,149,44,.65);color:var(--gold);text-transform:uppercase;letter-spacing:.2em;font-size:.78rem;font-weight:500;padding:15px 28px}
+.btn-outline-gold:hover{border-color:var(--gold);background:rgba(200,149,44,.08)}
+
+/* Menu mobile */
+.nav-burger{display:none;flex-direction:column;justify-content:center;align-items:center;gap:5px;width:44px;height:44px;background:none;border:0;padding:0;flex:none}
+.nav-burger span{display:block;width:22px;height:2px;background:var(--navy);border-radius:2px}
+.mobile-menu{position:fixed;inset:0;z-index:100;background:var(--navy);display:none;flex-direction:column;align-items:center;justify-content:center;gap:4px;text-align:center}
+.mobile-menu.open{display:flex}
+.mobile-menu a{font-family:'Bodoni Moda',serif;font-size:1.45rem;color:#EFE7D4;padding:11px 20px;transition:color .2s}
+.mobile-menu a:hover{color:var(--gold)}
+.mobile-menu .close{position:absolute;top:16px;right:16px;background:none;border:0;color:#EFE7D4;font-size:2.1rem;width:48px;height:48px;line-height:1}
+.mobile-menu .btn{margin-top:20px;font-family:'Jost',sans-serif;font-size:1rem}
+
+/* FAQ accordéon */
+.faq-list{max-width:760px;margin:40px auto 0}
+details.faq{background:var(--white);border:1px solid var(--line);border-radius:14px;margin-bottom:12px;overflow:hidden}
+details.faq summary{list-style:none;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:18px 22px;font-weight:500;font-size:1.02rem;color:var(--navy);cursor:pointer;transition:background .2s}
+details.faq summary::-webkit-details-marker{display:none}
+details.faq summary:hover{background:var(--cream-2)}
+details.faq summary:focus-visible{outline:3px solid var(--gold);outline-offset:-3px}
+details.faq .chev{flex:none;transition:transform .25s ease;color:var(--gold-ink)}
+details.faq[open] .chev{transform:rotate(45deg)}
+details.faq .faq-a{padding:0 22px 18px;color:var(--ink-2);font-size:.97rem}
+
+/* Bouton WhatsApp flottant */
+.wa-float{position:fixed;right:18px;bottom:18px;z-index:90;width:56px;height:56px;border-radius:50%;background:#1DA851;color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 24px rgba(29,168,81,.45);transition:transform .2s ease}
+.wa-float:hover{transform:scale(1.08)}
+.wa-float:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+
 /* Responsive */
 @media (max-width:960px){
   .grid-4{grid-template-columns:repeat(2,1fr)}
@@ -175,8 +218,9 @@ footer.site .fbrand span{color:var(--gold)}
 @media (max-width:720px){
   section{padding:64px 0}
   .nav ul{display:none}
-  .nav{gap:12px}
+  .nav{gap:10px}
   .nav .btn{margin-left:auto;padding:9px 14px;font-size:.85rem;flex:none}
+  .nav-burger{display:flex}
   .nav .brand{min-width:0}
   .nav .brand span{white-space:nowrap}
   .stats .wrap{grid-template-columns:repeat(2,1fr);gap:22px}
@@ -204,10 +248,23 @@ footer.site .fbrand span{color:var(--gold)}
       <li><a href="#diffuseurs">Diffuseurs</a></li>
       <li><a href="#forfaits">Forfaits</a></li>
       <li><a href="#methode">Méthode</a></li>
+      <li><a href="#faq">FAQ</a></li>
     </ul>
     <a class="btn btn-gold" href="https://wa.me/221774532540?text=Bonjour%20ScentSenegal%2C%20je%20souhaite%20un%20essai%20gratuit%20de%207%20jours%20pour%20mon%20%C3%A9tablissement." target="_blank" rel="noopener">Essai gratuit 7 jours</a>
+    <button class="nav-burger" aria-label="Ouvrir le menu" aria-expanded="false"><span></span><span></span><span></span></button>
   </div>
 </header>
+
+<nav class="mobile-menu" aria-label="Menu mobile">
+  <button class="close" aria-label="Fermer le menu">&times;</button>
+  <a href="#histoire">Notre histoire</a>
+  <a href="#senteurs">Senteurs</a>
+  <a href="#diffuseurs">Diffuseurs</a>
+  <a href="#forfaits">Forfaits</a>
+  <a href="#methode">Méthode</a>
+  <a href="#faq">FAQ</a>
+  <a class="btn btn-gold" href="https://wa.me/221774532540?text=Bonjour%20ScentSenegal%2C%20je%20souhaite%20un%20essai%20gratuit%20de%207%20jours%20pour%20mon%20%C3%A9tablissement." target="_blank" rel="noopener">Essai gratuit 7 jours</a>
+</nav>
 
 <main id="top">
 
@@ -216,13 +273,14 @@ footer.site .fbrand span{color:var(--gold)}
     <div class="wrap">
       <p class="kicker reveal">Marketing olfactif premium · Dakar</p>
       <h1 class="reveal">Les grands hôtels ont une odeur.<br>Le vôtre aussi, désormais.</h1>
+      <div class="orn reveal" aria-hidden="true"><span class="d">◆</span></div>
       <p class="reveal">Une signature sensorielle élégante pour créer des atmosphères mémorables, renforcer l'identité de votre établissement et offrir à chaque visiteur une expérience raffinée et cohérente.</p>
       <div class="cta-row reveal">
         <a class="btn btn-gold" href="https://wa.me/221774532540?text=Bonjour%20ScentSenegal%2C%20je%20souhaite%20un%20essai%20gratuit%20de%207%20jours%20pour%20mon%20%C3%A9tablissement." target="_blank" rel="noopener">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5.1-1.3A10 10 0 1 0 12 2Zm5.4 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .2-3.3-.7-2.8-1.1-4.6-4-4.7-4.2-.1-.2-1.1-1.5-1.1-2.9s.7-2 1-2.3c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5s.8 1.9.8 2c.1.1.1.3 0 .5-.3.6-.7.9-.5 1.2.7 1.2 1.6 2 2.8 2.6.3.2.5.1.7-.1l.8-1c.2-.3.4-.2.7-.1l2 .9c.3.2.5.2.6.4 0 .1 0 .7-.2 1.3Z"/></svg>
           Demander l'essai gratuit
         </a>
-        <a class="btn btn-ghost" href="#senteurs">Découvrir nos senteurs</a>
+        <a class="btn btn-outline-gold" href="#senteurs">Découvrir nos senteurs</a>
       </div>
       <div class="badges reveal">
         <span class="badge"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Zéro investissement matériel</span>
@@ -235,9 +293,9 @@ footer.site .fbrand span{color:var(--gold)}
   <!-- STATS -->
   <div class="stats" role="list" aria-label="Chiffres clés">
     <div class="wrap">
-      <div class="stat reveal" role="listitem"><div class="v">7 jours</div><div class="l">d'essai gratuit, sans contrat</div></div>
-      <div class="stat reveal" role="listitem"><div class="v">100 %</div><div class="l">clé en main, entretien inclus</div></div>
-      <div class="stat reveal" role="listitem"><div class="v">35+</div><div class="l">hôtels 3 à 5 étoiles ciblés à Dakar</div></div>
+      <div class="stat reveal" role="listitem"><div class="v"><span class="count" data-to="7">7</span> jours</div><div class="l">d'essai gratuit, sans contrat</div></div>
+      <div class="stat reveal" role="listitem"><div class="v"><span class="count" data-to="100">100</span> %</div><div class="l">clé en main, entretien inclus</div></div>
+      <div class="stat reveal" role="listitem"><div class="v"><span class="count" data-to="35">35</span>+</div><div class="l">hôtels 3 à 5 étoiles ciblés à Dakar</div></div>
       <div class="stat reveal" role="listitem"><div class="v">0</div><div class="l">concurrent direct au Sénégal</div></div>
     </div>
   </div>
@@ -248,7 +306,7 @@ footer.site .fbrand span{color:var(--gold)}
       <div class="reveal">
         <p class="kicker">Notre histoire</p>
         <h2>Une vision née entre deux cultures</h2>
-        <div class="gold-rule"></div>
+        <div class="orn" aria-hidden="true"><span class="d">◆</span></div>
         <p class="lead">Marriott, Ritz-Carlton, Four Seasons : leurs clients les reconnaissent avant même de voir le logo. Une ambiance olfactive bien pensée augmente la satisfaction, génère plus d'avis positifs et fait revenir les clients.</p>
         <p class="lead" style="margin-top:14px">Puis vint le souvenir du Sénégal. Le thiouraye brûlé à l'aube, le parfum porté avec fierté. Une culture où les senteurs ont une âme. Aucun hôtel à Dakar ne proposait cette expérience de manière professionnelle. ScentSenegal est né de là.</p>
         <blockquote>
@@ -275,7 +333,7 @@ footer.site .fbrand span{color:var(--gold)}
       <div class="center reveal">
         <p class="kicker">La collection signature</p>
         <h2>Quatre senteurs, une âme sénégalaise</h2>
-        <div class="gold-rule"></div>
+        <div class="orn" aria-hidden="true"><span class="d">◆</span></div>
         <p class="lead">Huiles essentielles premium en flacons de 500 ml, testées personnellement avant d'être proposées. Un flacon assure 3 à 4 semaines de diffusion continue.</p>
       </div>
       <div class="grid-4">
@@ -319,7 +377,7 @@ footer.site .fbrand span{color:var(--gold)}
       <div class="center reveal">
         <p class="kicker">La technologie</p>
         <h2>Des diffuseurs professionnels, fournis et entretenus</h2>
-        <div class="gold-rule"></div>
+        <div class="orn" aria-hidden="true"><span class="d">◆</span></div>
         <p class="lead">Aucun investissement matériel de votre part. Nous installons, réglons et entretenons chaque appareil. Deux modèles pour couvrir tous vos espaces.</p>
       </div>
       <div class="grid-2">
@@ -355,7 +413,7 @@ footer.site .fbrand span{color:var(--gold)}
       <div class="center reveal">
         <p class="kicker">Nos forfaits</p>
         <h2>Un abonnement mensuel fixe, tout inclus</h2>
-        <div class="gold-rule"></div>
+        <div class="orn" aria-hidden="true"><span class="d">◆</span></div>
         <p class="lead">Diffuseurs, huiles, installation, recharges et entretien : tout est compris. Vous ne signez rien avant d'avoir senti la différence par vous-même.</p>
       </div>
       <div class="grid-3">
@@ -413,7 +471,7 @@ footer.site .fbrand span{color:var(--gold)}
       <div class="center reveal">
         <p class="kicker">Notre méthode</p>
         <h2>Cinq étapes, zéro complication</h2>
-        <div class="gold-rule"></div>
+        <div class="orn" aria-hidden="true"><span class="d">◆</span></div>
         <p class="lead">Du premier rendez-vous au déploiement complet, nous gérons chaque détail.</p>
       </div>
       <div class="steps">
@@ -432,7 +490,7 @@ footer.site .fbrand span{color:var(--gold)}
       <div class="center reveal">
         <p class="kicker">Pourquoi ScentSenegal</p>
         <h2>Un hôtel qui sent bon, c'est un hôtel dont on se souvient</h2>
-        <div class="gold-rule"></div>
+        <div class="orn" aria-hidden="true"><span class="d">◆</span></div>
       </div>
       <div class="grid-3" style="margin-top:40px">
         <article class="why-item reveal">
@@ -454,6 +512,43 @@ footer.site .fbrand span{color:var(--gold)}
     </div>
   </section>
 
+  <!-- FAQ -->
+  <section id="faq">
+    <div class="wrap">
+      <div class="center reveal">
+        <p class="kicker">Questions fréquentes</p>
+        <h2>Ce que les hôteliers nous demandent</h2>
+        <div class="orn" aria-hidden="true"><span class="d">◆</span></div>
+      </div>
+      <div class="faq-list">
+        <details class="faq reveal">
+          <summary>Et les allergies ou la santé de mes clients ?<svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></summary>
+          <div class="faq-a"><p>Nos huiles sont testées avant tout déploiement et diffusées à froid, sans combustion ni fumée. L'intensité est réglable zone par zone, et nous la calibrons volontairement en dessous des seuils de gêne. Lors de l'évaluation, nous identifions avec vous les espaces sensibles à éviter.</p></div>
+        </details>
+        <details class="faq reveal">
+          <summary>Que se passe-t-il à la fin de l'essai de 7 jours ?<svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></summary>
+          <div class="faq-a"><p>Deux options, sans surprise : si vous êtes convaincu, nous signons et déployons le plan olfactif complet. Sinon, nous retirons le matériel sans aucuns frais. Vous ne payez rien avant d'avoir décidé.</p></div>
+        </details>
+        <details class="faq reveal">
+          <summary>Combien de temps prend l'installation ?<svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></summary>
+          <div class="faq-a"><p>Moins d'une demi-journée par espace, sans travaux ni perçage majeur. Les diffuseurs sont muraux, posés ou autoportants, et fonctionnent discrètement (moins de 35 dB).</p></div>
+        </details>
+        <details class="faq reveal">
+          <summary>Puis-je changer de senteur en cours d'abonnement ?<svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></summary>
+          <div class="faq-a"><p>Oui. Le forfait Découverte inclut un changement par trimestre sans frais, et les forfaits supérieurs offrent encore plus de flexibilité, avec un accès prioritaire aux nouvelles senteurs de la collection.</p></div>
+        </details>
+        <details class="faq reveal">
+          <summary>Que se passe-t-il en cas de panne d'un diffuseur ?<svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></summary>
+          <div class="faq-a"><p>Le remplacement sous 48 heures est prévu au contrat. Nous gardons des unités de rechange en stock à Dakar, et les visites mensuelles incluent la maintenance préventive pour éviter les pannes.</p></div>
+        </details>
+        <details class="faq reveal">
+          <summary>L'abonnement comprend-il vraiment tout ?<svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></summary>
+          <div class="faq-a"><p>Oui : diffuseurs, huiles, installation, recharges, visites et maintenance. Un seul paiement mensuel fixe, sans frais cachés. Les diffuseurs restent notre propriété, vous n'investissez rien en matériel.</p></div>
+        </details>
+      </div>
+    </div>
+  </section>
+
   <!-- CTA FINAL -->
   <section class="final" id="contact">
     <div class="wrap">
@@ -465,7 +560,7 @@ footer.site .fbrand span{color:var(--gold)}
           <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5.1-1.3A10 10 0 1 0 12 2Zm5.4 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .2-3.3-.7-2.8-1.1-4.6-4-4.7-4.2-.1-.2-1.1-1.5-1.1-2.9s.7-2 1-2.3c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5s.8 1.9.8 2c.1.1.1.3 0 .5-.3.6-.7.9-.5 1.2.7 1.2 1.6 2 2.8 2.6.3.2.5.1.7-.1l.8-1c.2-.3.4-.2.7-.1l2 .9c.3.2.5.2.6.4 0 .1 0 .7-.2 1.3Z"/></svg>
           WhatsApp : +221 77 453 25 40
         </a>
-        <a class="btn btn-ghost" href="mailto:contact@scentsenegal.com">Écrire un email</a>
+        <a class="btn btn-outline-gold" href="mailto:contact@scentsenegal.com">Écrire un email</a>
       </div>
       <div class="contact-line reveal">
         <a href="mailto:contact@scentsenegal.com"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>contact@scentsenegal.com</a>
@@ -482,12 +577,50 @@ footer.site .fbrand span{color:var(--gold)}
   </div>
 </footer>
 
+<a class="wa-float" href="https://wa.me/221774532540?text=Bonjour%20ScentSenegal%2C%20je%20souhaite%20un%20essai%20gratuit%20de%207%20jours%20pour%20mon%20%C3%A9tablissement." target="_blank" rel="noopener" aria-label="Nous écrire sur WhatsApp">
+  <svg width="27" height="27" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5.1-1.3A10 10 0 1 0 12 2Zm5.4 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .2-3.3-.7-2.8-1.1-4.6-4-4.7-4.2-.1-.2-1.1-1.5-1.1-2.9s.7-2 1-2.3c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5s.8 1.9.8 2c.1.1.1.3 0 .5-.3.6-.7.9-.5 1.2.7 1.2 1.6 2 2.8 2.6.3.2.5.1.7-.1l.8-1c.2-.3.4-.2.7-.1l2 .9c.3.2.5.2.6.4 0 .1 0 .7-.2 1.3Z"/></svg>
+</a>
+
 <script>
   document.documentElement.classList.add('js');
   const obs = new IntersectionObserver((entries) => {
     for (const e of entries) if (e.isIntersecting) { e.target.classList.add('in'); obs.unobserve(e.target); }
   }, { threshold: 0.12 });
   document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+  // Menu mobile
+  const burger = document.querySelector('.nav-burger');
+  const menu = document.querySelector('.mobile-menu');
+  if (burger && menu) {
+    const setOpen = (o) => {
+      menu.classList.toggle('open', o);
+      burger.setAttribute('aria-expanded', o);
+      document.body.style.overflow = o ? 'hidden' : '';
+    };
+    burger.addEventListener('click', () => setOpen(!menu.classList.contains('open')));
+    menu.querySelectorAll('a, .close').forEach(el => el.addEventListener('click', () => setOpen(false)));
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') setOpen(false); });
+  }
+
+  // Compteurs animés (sautent directement au total si l'utilisateur préfère réduire les animations)
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const countObs = new IntersectionObserver((entries) => {
+    for (const e of entries) {
+      if (!e.isIntersecting) continue;
+      countObs.unobserve(e.target);
+      const el = e.target, to = +el.dataset.to;
+      if (reduceMotion) { el.textContent = to; continue; }
+      el.textContent = '0';
+      const t0 = performance.now();
+      const step = (t) => {
+        const p = Math.min((t - t0) / 900, 1);
+        el.textContent = Math.round(to * (1 - Math.pow(1 - p, 3)));
+        if (p < 1) requestAnimationFrame(step);
+      };
+      requestAnimationFrame(step);
+    }
+  }, { threshold: 0.6 });
+  document.querySelectorAll('.count').forEach(el => countObs.observe(el));
 </script>
 </body>
 </html>
