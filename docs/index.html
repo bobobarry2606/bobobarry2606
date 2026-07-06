@@ -39,9 +39,13 @@ h2{font-size:clamp(1.7rem,3.6vw,2.5rem);margin-bottom:14px}
 .gold-rule{width:56px;height:3px;background:var(--gold);border-radius:2px;margin:18px 0 26px}
 .center .gold-rule{margin-left:auto;margin-right:auto}
 
-/* Reveal on scroll (uniquement si JS est actif : le contenu reste visible sans JS) */
-html.js .reveal{opacity:0;transform:translateY(24px);transition:opacity .55s ease,transform .55s ease}
+/* Reveal on scroll, cadence feutrée (le contenu reste visible sans JS) */
+html.js .reveal{opacity:0;transform:translateY(34px);transition:opacity .85s cubic-bezier(.22,.61,.36,1),transform .85s cubic-bezier(.22,.61,.36,1)}
 html.js .reveal.in{opacity:1;transform:none}
+.grid-4>.reveal:nth-child(2),.grid-3>.reveal:nth-child(2),.grid-2>.reveal:nth-child(2),.steps>.reveal:nth-child(2){transition-delay:.1s}
+.grid-4>.reveal:nth-child(3),.grid-3>.reveal:nth-child(3),.steps>.reveal:nth-child(3){transition-delay:.2s}
+.grid-4>.reveal:nth-child(4),.steps>.reveal:nth-child(4){transition-delay:.3s}
+.steps>.reveal:nth-child(5){transition-delay:.4s}
 @media (prefers-reduced-motion: reduce){
   html{scroll-behavior:auto}
   html.js .reveal{opacity:1;transform:none;transition:none}
@@ -49,7 +53,13 @@ html.js .reveal.in{opacity:1;transform:none}
 }
 
 /* Header */
-header{position:sticky;top:0;z-index:50;background:rgba(253,251,245,.82);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+header{position:fixed;top:0;left:0;right:0;z-index:50;background:rgba(253,251,245,.82);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--line);transition:background .4s ease,border-color .4s ease}
+html.js header.top{background:transparent;border-bottom-color:transparent;backdrop-filter:none;-webkit-backdrop-filter:none}
+header.top .brand span{color:#F3ECDC}
+header.top .nav ul a{color:#D9CFB8}
+header.top .nav ul a:hover,header.top .nav ul a:focus-visible{color:var(--gold)}
+header.top .nav-burger span{background:#F3ECDC}
+section{scroll-margin-top:80px}
 .nav{display:flex;align-items:center;gap:28px;height:72px}
 .nav .brand{display:flex;align-items:center;gap:12px;font-family:'Bodoni Moda',serif;font-size:1.25rem;color:var(--navy);font-weight:600}
 .nav .brand img{height:44px;width:auto}
@@ -69,7 +79,10 @@ header{position:sticky;top:0;z-index:50;background:rgba(253,251,245,.82);backdro
 .nav-toggle{display:none}
 
 /* Hero */
-.hero{background:radial-gradient(1100px 520px at 78% -10%,rgba(200,149,44,.22),transparent 60%),linear-gradient(160deg,var(--navy) 0%,#16202B 100%);color:#EFE7D4;padding:110px 0 96px;overflow:hidden}
+.hero{background:radial-gradient(1100px 520px at 78% -10%,rgba(200,149,44,.22),transparent 60%),linear-gradient(160deg,var(--navy) 0%,#16202B 100%);color:#EFE7D4;padding:170px 0 120px;overflow:hidden}
+.scroll-cue{position:absolute;bottom:24px;left:50%;width:1px;height:58px;background:linear-gradient(180deg,var(--gold),transparent);z-index:1;transform-origin:top}
+html.js .scroll-cue{animation:cue 2.4s ease-in-out infinite}
+@keyframes cue{0%,100%{opacity:.9;transform:scaleY(1)}50%{opacity:.35;transform:scaleY(.55)}}
 .hero-bg{position:absolute;inset:0;z-index:0}
 .hero-bg img{width:100%;height:100%;object-fit:cover;transform:scale(1.06)}
 html.js .hero-bg img{animation:kenburns 28s ease-in-out infinite alternate}
@@ -117,7 +130,16 @@ html.js .hero-bg img{animation:kenburns 28s ease-in-out infinite alternate}
 /* Diffuseurs */
 .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:26px;margin-top:44px}
 .device{background:var(--white);border:1px solid var(--line);border-radius:var(--radius);padding:0;box-shadow:var(--shadow);overflow:hidden}
-.device .device-img{width:100%;height:290px;object-fit:cover;display:block}
+.device .device-img{width:100%;height:auto;aspect-ratio:1/1;object-fit:cover;display:block;transition:transform 1s cubic-bezier(.22,.61,.36,1)}
+.device:hover .device-img{transform:scale(1.045)}
+
+/* Interlude photo pleine largeur */
+.interlude{position:relative;height:54vh;min-height:380px;overflow:hidden}
+.interlude img{position:absolute;left:0;top:-12%;width:100%;height:124%;object-fit:cover}
+.interlude::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(18,24,33,.6),rgba(18,24,33,.66))}
+.interlude .q{position:absolute;inset:0;z-index:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:#F3ECDC;padding:0 24px}
+.interlude .q p{font-family:'Bodoni Moda',Georgia,serif;font-size:clamp(1.35rem,3vw,2.1rem);max-width:740px;line-height:1.4}
+.interlude .q .who{margin-top:14px;font-size:.82rem;letter-spacing:.24em;text-transform:uppercase;color:var(--gold)}
 .device .device-body{padding:26px 32px 32px}
 .device .tag{font-size:.74rem;letter-spacing:.16em;text-transform:uppercase;color:var(--gold-ink);font-weight:600}
 .device h3{font-size:1.5rem;margin:8px 0 4px}
@@ -302,6 +324,7 @@ details.faq .faq-a{padding:0 22px 18px;color:var(--ink-2);font-size:.97rem}
         <span class="badge"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Premier acteur au Sénégal</span>
       </div>
     </div>
+    <span class="scroll-cue" aria-hidden="true"></span>
   </section>
 
   <!-- STATS -->
@@ -384,6 +407,15 @@ details.faq .faq-a{padding:0 22px 18px;color:var(--ink-2);font-size:.97rem}
       </div>
     </div>
   </section>
+
+  <!-- INTERLUDE -->
+  <div class="interlude" role="presentation">
+    <img src="assets/interlude_bg.jpg" width="1920" height="1174" loading="lazy" alt="">
+    <div class="q">
+      <p class="reveal">« Le luxe se respire avant de se voir. Chaque espace mérite une signature que vos clients emporteront avec eux. »</p>
+      <span class="who reveal">ScentSenegal · Dakar</span>
+    </div>
+  </div>
 
   <!-- DIFFUSEURS -->
   <section id="diffuseurs">
@@ -643,12 +675,26 @@ details.faq .faq-a{padding:0 22px 18px;color:var(--ink-2);font-size:.97rem}
   }, { threshold: 0.6 });
   document.querySelectorAll('.count').forEach(el => countObs.observe(el));
 
-  // Parallaxe légère sur le fond du hero (désactivée si l'utilisateur réduit les animations)
+  // Header transparent en haut de page, crème dès qu'on défile
+  const hdr = document.querySelector('header');
+  const setHdr = () => hdr.classList.toggle('top', scrollY < 40);
+  setHdr();
+  addEventListener('scroll', setHdr, { passive: true });
+
+  // Parallaxe légère (désactivée si l'utilisateur réduit les animations)
   const heroImg = document.querySelector('.hero-bg img');
-  if (heroImg && !reduceMotion) {
+  const interImg = document.querySelector('.interlude img');
+  if (!reduceMotion) {
     addEventListener('scroll', () => {
       const y = scrollY;
-      if (y < innerHeight) heroImg.style.translate = `0 ${y * 0.18}px`;
+      if (heroImg && y < innerHeight) heroImg.style.translate = `0 ${y * 0.18}px`;
+      if (interImg) {
+        const r = interImg.parentElement.getBoundingClientRect();
+        if (r.bottom > 0 && r.top < innerHeight) {
+          const p = (r.top + r.height / 2 - innerHeight / 2) / innerHeight;
+          interImg.style.translate = `0 ${p * -46}px`;
+        }
+      }
     }, { passive: true });
   }
 </script>
