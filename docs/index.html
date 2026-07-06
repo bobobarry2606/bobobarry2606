@@ -122,6 +122,14 @@ html.js .hero-bg img{animation:kenburns 28s ease-in-out infinite alternate}
 /* Senteurs */
 .senteurs{background:var(--white)}
 .grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:22px;margin-top:44px}
+.scent-grid{margin-top:26px}
+.filter-row{display:flex;flex-wrap:wrap;justify-content:center;gap:12px;margin-top:34px}
+.fpill{font-family:'Jost',sans-serif;font-size:.92rem;padding:9px 22px;border-radius:999px;border:1px solid var(--line);background:var(--cream);color:var(--ink-2);cursor:pointer;transition:all .25s ease}
+.fpill:hover{border-color:var(--gold);color:var(--gold-ink)}
+.fpill:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.fpill.is-active{background:var(--gold);border-color:var(--gold);color:#20180a;font-weight:500}
+.scent{transition:opacity .35s ease,transform .35s ease,box-shadow .25s ease}
+.scent.filtering{opacity:0;transform:translateY(14px)}
 .scent{border:1px solid var(--line);border-top:4px solid var(--sc,#C8952C);border-radius:var(--radius);padding:26px 22px;background:var(--cream);transition:transform .25s ease,box-shadow .25s ease}
 .scent:hover{transform:translateY(-6px);box-shadow:var(--shadow)}
 .scent h3{font-size:1.3rem;color:var(--sc);margin-bottom:6px}
@@ -137,6 +145,19 @@ html.js .hero-bg img{animation:kenburns 28s ease-in-out infinite alternate}
 .device{background:var(--white);border:1px solid var(--line);border-radius:var(--radius);padding:0;box-shadow:var(--shadow);overflow:hidden}
 .device .device-img{width:100%;height:auto;aspect-ratio:1/1;object-fit:cover;display:block;transition:transform 1s cubic-bezier(.22,.61,.36,1)}
 .device:hover .device-img{transform:scale(1.045)}
+
+/* Nos univers (ambiances) */
+.univers-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:44px}
+.univ{position:relative;border-radius:var(--radius);overflow:hidden;aspect-ratio:3/4;box-shadow:var(--shadow)}
+.univ img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform 1.1s cubic-bezier(.22,.61,.36,1)}
+.univ:hover img{transform:scale(1.07)}
+.univ::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(18,24,33,.05) 28%,rgba(18,24,33,.85));transition:background .4s ease}
+.univ:hover::after{background:linear-gradient(180deg,rgba(18,24,33,.12) 18%,rgba(18,24,33,.88))}
+.univ .cap{position:absolute;left:0;right:0;bottom:0;z-index:1;padding:26px 24px;color:#F3ECDC}
+.univ .cap .sp{font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;color:#D9CFB8}
+.univ .cap .ln{width:34px;height:2px;background:var(--sc);margin:8px 0}
+.univ .cap h3{font-family:'Bodoni Moda',Georgia,serif;color:#fff;font-size:1.6rem;margin-bottom:6px}
+.univ .cap p{font-size:.92rem;color:#CBC2AC;line-height:1.45}
 
 /* Interlude photo pleine largeur */
 .interlude{position:relative;height:54vh;min-height:380px;overflow:hidden}
@@ -265,6 +286,8 @@ details.faq .faq-a{padding:0 22px 18px;color:var(--ink-2);font-size:.97rem}
   .nav .brand span{white-space:nowrap}
   .stats .wrap{grid-template-columns:repeat(2,1fr);gap:22px}
   .grid-3,.grid-2{grid-template-columns:1fr}
+  .univers-grid{grid-template-columns:1fr}
+  .univ{aspect-ratio:16/10}
   .plan.pop{order:-1}
 }
 @media (max-width:520px){
@@ -378,26 +401,33 @@ details.faq .faq-a{padding:0 22px 18px;color:var(--ink-2);font-size:.97rem}
         <div class="orn" aria-hidden="true"><span class="d">◆</span></div>
         <p class="lead">Huiles essentielles premium en flacons de 500 ml, testées personnellement avant d'être proposées. Un flacon assure 3 à 4 semaines de diffusion continue.</p>
       </div>
-      <div class="grid-4">
-        <article class="scent reveal" style="--sc:var(--teranga)">
+      <div class="filter-row reveal" role="tablist" aria-label="Filtrer les senteurs par espace">
+        <button class="fpill is-active" data-filter="all" aria-pressed="true">Toutes</button>
+        <button class="fpill" data-filter="lobbies" aria-pressed="false">Lobbies</button>
+        <button class="fpill" data-filter="restaurants" aria-pressed="false">Restaurants</button>
+        <button class="fpill" data-filter="spas" aria-pressed="false">Spas</button>
+        <button class="fpill" data-filter="prestige" aria-pressed="false">Hôtels 5★</button>
+      </div>
+      <div class="grid-4 scent-grid">
+        <article class="scent reveal" data-cat="lobbies" style="--sc:var(--teranga)">
           <h3>Teranga</h3>
           <p class="notes">Santal, cuir, cèdre, ambre, vétiver, boisé oriental</p>
           <p>L'accueil sénégalais fait parfum : un bois chaud et ambré qui dit bienvenue avant le premier mot.</p>
           <span class="zone">Lobbies · Couloirs</span>
         </article>
-        <article class="scent reveal" style="--sc:var(--goree)">
+        <article class="scent reveal" data-cat="restaurants lobbies" style="--sc:var(--goree)">
           <h3>Gorée</h3>
           <p class="notes">Citron, bergamote, jasmin, notes marines</p>
           <p>La lumière de l'Atlantique : agrumes vifs et brise marine pour des espaces clairs et vivants.</p>
           <span class="zone">Restaurants · Lobbies clairs</span>
         </article>
-        <article class="scent reveal" style="--sc:var(--ngor)">
+        <article class="scent reveal" data-cat="spas" style="--sc:var(--ngor)">
           <h3>Ngor</h3>
           <p class="notes">Thé blanc, santal chaud, linge propre</p>
           <p>Le calme d'un matin pur : thé blanc et linge frais, pour respirer et se détendre.</p>
           <span class="zone">Spas · Salons VIP</span>
         </article>
-        <article class="scent reveal" style="--sc:var(--lacrose)">
+        <article class="scent reveal" data-cat="prestige" style="--sc:var(--lacrose)">
           <h3>Lac Rose</h3>
           <p class="notes">Santal, cèdre, jasmin, musc, ambre gris, iris</p>
           <p>L'élégance rare : un sillage boisé et floral, profond et inoubliable, la signature des palaces.</p>
@@ -458,6 +488,47 @@ details.faq .faq-a{padding:0 22px 18px;color:var(--ink-2);font-size:.97rem}
               <tr><td>Format</td><td>Tour autoportante</td></tr>
               <tr><td>Pilotage</td><td>Application mobile et horaires</td></tr>
             </table>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- NOS UNIVERS -->
+  <section id="univers">
+    <div class="wrap">
+      <div class="center reveal">
+        <p class="script-kicker">Nos univers</p>
+        <h2>Une senteur pour chaque atmosphère</h2>
+        <div class="orn" aria-hidden="true"><span class="d">◆</span></div>
+        <p class="lead">Chaque espace raconte une histoire différente. Nous composons la signature olfactive qui lui correspond, du grand hall à l'instant de détente.</p>
+      </div>
+      <div class="univers-grid">
+        <article class="univ reveal" style="--sc:var(--teranga)">
+          <img src="assets/amb_hall.jpg" width="909" height="1000" loading="lazy" alt="Grand hall d'hôtel à l'ambiance chaleureuse">
+          <div class="cap">
+            <span class="sp">Halls &amp; réceptions</span>
+            <div class="ln"></div>
+            <h3>Teranga</h3>
+            <p>L'accueil qui se ressent dès le seuil franchi.</p>
+          </div>
+        </article>
+        <article class="univ reveal" style="--sc:var(--goree)">
+          <img src="assets/amb_details.jpg" width="780" height="880" loading="lazy" alt="Détails raffinés d'un espace d'hôtel">
+          <div class="cap">
+            <span class="sp">Restaurants &amp; salons</span>
+            <div class="ln"></div>
+            <h3>Gorée</h3>
+            <p>La fraîcheur lumineuse des lieux de vie.</p>
+          </div>
+        </article>
+        <article class="univ reveal" style="--sc:var(--ngor)">
+          <img src="assets/amb_lumiere.jpg" width="750" height="1000" loading="lazy" alt="Lumière feutrée et chaleureuse d'un espace bien-être">
+          <div class="cap">
+            <span class="sp">Spas &amp; bien-être</span>
+            <div class="ln"></div>
+            <h3>Ngor</h3>
+            <p>Le calme qui invite à respirer et se poser.</p>
           </div>
         </article>
       </div>
@@ -694,6 +765,25 @@ details.faq .faq-a{padding:0 22px 18px;color:var(--ink-2);font-size:.97rem}
     heroTitle.classList.add('split');
     requestAnimationFrame(() => requestAnimationFrame(() => heroTitle.classList.add('in')));
   }
+
+  // Filtres des senteurs par espace
+  const pills = document.querySelectorAll('.fpill');
+  const scentCards = document.querySelectorAll('.scent-grid .scent');
+  pills.forEach(pill => pill.addEventListener('click', () => {
+    pills.forEach(p => { p.classList.remove('is-active'); p.setAttribute('aria-pressed', 'false'); });
+    pill.classList.add('is-active'); pill.setAttribute('aria-pressed', 'true');
+    const f = pill.dataset.filter;
+    scentCards.forEach(card => {
+      const match = f === 'all' || (card.dataset.cat || '').split(' ').includes(f);
+      if (match) {
+        card.style.display = '';
+        requestAnimationFrame(() => card.classList.remove('filtering'));
+      } else {
+        card.classList.add('filtering');
+        setTimeout(() => { if (card.classList.contains('filtering')) card.style.display = 'none'; }, 350);
+      }
+    });
+  }));
 
   // Header transparent en haut de page, crème dès qu'on défile
   const hdr = document.querySelector('header');
