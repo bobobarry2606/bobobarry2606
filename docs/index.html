@@ -80,6 +80,9 @@ section{scroll-margin-top:80px}
 
 /* Hero */
 .hero{background:radial-gradient(1100px 520px at 78% -10%,rgba(200,149,44,.22),transparent 60%),linear-gradient(160deg,var(--navy) 0%,#16202B 100%);color:#EFE7D4;padding:170px 0 120px;overflow:hidden}
+.hero-title .w{display:inline-block;white-space:pre}
+html.js .hero-title.split .w{opacity:0;transform:translateY(30px);transition:opacity .7s cubic-bezier(.22,.61,.36,1),transform .7s cubic-bezier(.22,.61,.36,1)}
+html.js .hero-title.split.in .w{opacity:1;transform:none}
 .scroll-cue{position:absolute;bottom:24px;left:50%;width:1px;height:58px;background:linear-gradient(180deg,var(--gold),transparent);z-index:1;transform-origin:top}
 html.js .scroll-cue{animation:cue 2.4s ease-in-out infinite}
 @keyframes cue{0%,100%{opacity:.9;transform:scaleY(1)}50%{opacity:.35;transform:scaleY(.55)}}
@@ -308,7 +311,7 @@ details.faq .faq-a{padding:0 22px 18px;color:var(--ink-2);font-size:.97rem}
     <div class="hero-bg" aria-hidden="true"><img src="assets/hero_bg.jpg" width="1920" height="1346" alt=""></div>
     <div class="wrap">
       <p class="kicker reveal">Marketing olfactif premium · Dakar</p>
-      <h1 class="reveal">Les grands hôtels ont une odeur.<br>Le vôtre aussi, désormais.</h1>
+      <h1 class="hero-title">Les grands hôtels ont une odeur.<br>Le vôtre aussi, désormais.</h1>
       <div class="orn reveal" aria-hidden="true"><span class="d">◆</span></div>
       <p class="reveal">Une signature sensorielle élégante pour créer des atmosphères mémorables, renforcer l'identité de votre établissement et offrir à chaque visiteur une expérience raffinée et cohérente.</p>
       <div class="cta-row reveal">
@@ -674,6 +677,21 @@ details.faq .faq-a{padding:0 22px 18px;color:var(--ink-2);font-size:.97rem}
     }
   }, { threshold: 0.6 });
   document.querySelectorAll('.count').forEach(el => countObs.observe(el));
+
+  // Révélation mot par mot du titre du hero (signature luxe)
+  const heroTitle = document.querySelector('.hero-title');
+  if (heroTitle && !reduceMotion) {
+    const lines = heroTitle.innerHTML.split(/<br\s*\/?>/i);
+    let idx = 0;
+    heroTitle.innerHTML = lines.map(line =>
+      line.trim().split(/\s+/).map(word => {
+        const d = (idx++ * 0.09).toFixed(2);
+        return `<span class="w" style="transition-delay:${d}s">${word} </span>`;
+      }).join('')
+    ).join('<br>');
+    heroTitle.classList.add('split');
+    requestAnimationFrame(() => requestAnimationFrame(() => heroTitle.classList.add('in')));
+  }
 
   // Header transparent en haut de page, crème dès qu'on défile
   const hdr = document.querySelector('header');
