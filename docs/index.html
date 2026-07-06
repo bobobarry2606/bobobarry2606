@@ -148,6 +148,7 @@ html.js .hero-bg img{animation:kenburns 28s ease-in-out infinite alternate}
 
 /* Nos univers (ambiances) */
 .univers-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:44px}
+.univers-4{grid-template-columns:repeat(4,1fr);gap:16px}
 .univ{position:relative;border-radius:var(--radius);overflow:hidden;aspect-ratio:3/4;box-shadow:var(--shadow)}
 .univ img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform 1.1s cubic-bezier(.22,.61,.36,1)}
 .univ:hover img{transform:scale(1.07)}
@@ -273,6 +274,7 @@ details.faq .faq-a{padding:0 22px 18px;color:var(--ink-2);font-size:.97rem}
 /* Responsive */
 @media (max-width:960px){
   .grid-4{grid-template-columns:repeat(2,1fr)}
+  .univers-4{grid-template-columns:repeat(2,1fr)}
   .steps{grid-template-columns:repeat(2,1fr)}
   .story .wrap{grid-template-columns:1fr;gap:36px}
 }
@@ -503,9 +505,9 @@ details.faq .faq-a{padding:0 22px 18px;color:var(--ink-2);font-size:.97rem}
         <div class="orn" aria-hidden="true"><span class="d">◆</span></div>
         <p class="lead">Chaque espace raconte une histoire différente. Nous composons la signature olfactive qui lui correspond, du grand hall à l'instant de détente.</p>
       </div>
-      <div class="univers-grid">
+      <div class="univers-grid univers-4">
         <article class="univ reveal" style="--sc:var(--teranga)">
-          <img src="assets/amb_hall.jpg" width="909" height="1000" loading="lazy" alt="Grand hall d'hôtel à l'ambiance chaleureuse">
+          <img src="assets/univ_teranga.jpg" width="1200" height="841" loading="lazy" alt="Grand hall d'hôtel à l'ambiance chaleureuse et boisée">
           <div class="cap">
             <span class="sp">Halls &amp; réceptions</span>
             <div class="ln"></div>
@@ -514,7 +516,7 @@ details.faq .faq-a{padding:0 22px 18px;color:var(--ink-2);font-size:.97rem}
           </div>
         </article>
         <article class="univ reveal" style="--sc:var(--goree)">
-          <img src="assets/amb_details.jpg" width="780" height="880" loading="lazy" alt="Détails raffinés d'un espace d'hôtel">
+          <img src="assets/univ_goree.jpg" width="1200" height="800" loading="lazy" alt="Salon lumineux et végétalisé aux tons clairs">
           <div class="cap">
             <span class="sp">Restaurants &amp; salons</span>
             <div class="ln"></div>
@@ -523,12 +525,21 @@ details.faq .faq-a{padding:0 22px 18px;color:var(--ink-2);font-size:.97rem}
           </div>
         </article>
         <article class="univ reveal" style="--sc:var(--ngor)">
-          <img src="assets/amb_lumiere.jpg" width="750" height="1000" loading="lazy" alt="Lumière feutrée et chaleureuse d'un espace bien-être">
+          <img src="assets/univ_ngor.jpg" width="1200" height="800" loading="lazy" alt="Espace spa épuré avec bassin et transats en bois">
           <div class="cap">
             <span class="sp">Spas &amp; bien-être</span>
             <div class="ln"></div>
             <h3>Ngor</h3>
             <p>Le calme qui invite à respirer et se poser.</p>
+          </div>
+        </article>
+        <article class="univ reveal" style="--sc:var(--lacrose)">
+          <img src="assets/univ_lacrose.jpg" width="1200" height="800" loading="lazy" alt="Restaurant élégant et feutré aux boiseries dorées">
+          <div class="cap">
+            <span class="sp">Palaces &amp; 5 étoiles</span>
+            <div class="ln"></div>
+            <h3>Lac Rose</h3>
+            <p>L'élégance rare des lieux d'exception.</p>
           </div>
         </article>
       </div>
