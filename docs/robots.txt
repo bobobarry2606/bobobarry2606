@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://bobobarry2606.github.io/bobobarry2606/sitemap.xml
